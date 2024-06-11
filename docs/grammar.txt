@@ -1,0 +1,33 @@
+// document conventions
+//  symbol1 | symbol2 <- represents symbol1 or symbol2
+//  symbol* <- symbol appears zero or more times
+// (...) <- precedence
+// symbol+ <- symbol appears atleast once
+// symbol? <- symbol appears zero or one time but no more than once 
+// grammar is not case sensitive, exceptions are explicitly stated
+// "symbol" is to be treated as token
+//------------------------------------------------------------
+
+digit:
+    0 | 1 | ... | 9
+
+non-digit:
+    a | b | ... | z | A | B | ... | Z
+
+identifier:
+    non-digit (digit | non-digit)*
+
+keyword one of:
+    CREATE, TABLE
+
+data_type:
+    int32 | string
+
+
+create_db_statement
+    CREATE TABLE  identifier "("  (identifier data_type)+ ")"
+
+
+statement:
+    create_db_statement ";"
+

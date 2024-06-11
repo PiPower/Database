@@ -2,6 +2,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "../utils/logs.hpp"
+#include "parser/parser.hpp"
 #include <stdio.h>
 #include <iostream>
 using namespace std;
@@ -21,14 +22,18 @@ int main()
 
     errorCheck(bind( sock, (sockaddr*) &servaddr, sizeof(sockaddr_in )) );
     errorCheck( listen(sock, 10) );
-    char buffer[400];
-  
-    sockaddr_in clientAddr;
-    socklen_t len;
-    int client = accept(sock,  (sockaddr*)&clientAddr, &len);
-    errorCheck(client);
-    recv(client, buffer, 400, 0);
-    printf("%s", buffer);
 
-    
+    char buffer[400];
+    while (true)
+    {
+        sockaddr_in clientAddr;
+        socklen_t len;
+        int client = accept(sock,  (sockaddr*)&clientAddr, &len);
+        errorCheck(client);
+        recv(client, buffer, 400, 0);
+
+        parse(buffer);
+
+
+    }  
 }
