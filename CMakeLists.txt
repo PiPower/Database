@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-add_executable(dbms	dbms/dbms_entry.cpp utils/logs.cpp dbms/parser/parser.cpp)
+include_directories(dbms)
 
-add_executable(client client/client_entry.cpp utils/logs.cpp)
+include_directories(client)
