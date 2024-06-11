@@ -6,13 +6,19 @@
 // symbol? <- symbol appears zero or one time but no more than once 
 // grammar is not case sensitive, exceptions are explicitly stated
 // "symbol" is to be treated as token
+// ' ' '\t' ||  source[offset] == '\r' || source[offset] == '\n'
 //------------------------------------------------------------
+
+whitespace:
+ ' ' | \t | \r | '\n'
 
 digit:
     0 | 1 | ... | 9
 
+alpha: 
+    a | b | ... | z | A | B | ... | Z 
 non-digit:
-    a | b | ... | z | A | B | ... | Z
+    alpha | _
 
 identifier:
     non-digit (digit | non-digit)*

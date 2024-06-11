@@ -1,20 +1,15 @@
 #include "parser.hpp"
 using namespace std;
-struct ParsingState
-{
-    const char* text;
-    unsigned int ptr;
-
-};
-
-
-
 
 AstNode* parse(const char* text)
 {
-    ParsingState state;
-    state.text = text;
-    state.ptr = 0;
+    ParsingState state{text, 0 , Tokenizer{text} };
+
+    return parseStatement(state);
+}
+
+AstNode* parseStatement(ParsingState& state)
+{
+    Token token =  state.tokenizer.scan();
     
-    return nullptr;
 }
