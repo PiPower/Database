@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-include_directories(dbms)
+add_subdirectory(dbms)
 
-include_directories(client)
+add_subdirectory(client)
