@@ -21,17 +21,27 @@ Token Tokenizer::scan()
             m_offset++;
             continue;
         }
-        Token t = parseIdentifier();
+        Token t = parsePunctuators();
+        if(t.type != TokenType::NONE)
+        {
+            m_offset++;
+            return t;
+        }
+
+        t = parseIdentifier();
         if(t.type != TokenType::NONE)
         {
             return t;
         }
 
-
+        t = parseNumber();
+        if(t.type != TokenType::NONE)
+        {
+            return t;
+        }
     }
     
-
-    return Token();
+    return Token{TokenType::ERROR};
 }
 
 Token Tokenizer::peekToken()
@@ -47,6 +57,9 @@ void Tokenizer::keywordMapInit()
 {
     m_keywordMap["create"] = TokenType::CREATE;
     m_keywordMap["table"] = TokenType::TABLE;
+    m_keywordMap["int"] = TokenType::INT;
+    m_keywordMap["char"] = TokenType::CHAR;
+    m_keywordMap["from"] = TokenType::FROM;
 }
 
 Token Tokenizer::parseIdentifier()
@@ -74,6 +87,59 @@ Token Tokenizer::parseIdentifier()
 
     Token token;
     token.type = TokenType::IDENTIFIER;
+    token.data = new string(currentString );
+    return token;
+}
+
+Token Tokenizer::parsePunctuators()
+{
+    Token token;
+    token.type = TokenType::NONE;
+    switch (m_source[m_offset])
+    {
+    case ';':
+        token.type = TokenType::SEMICOLON;
+        break;
+    case ',':
+        token.type = TokenType::COMMA;
+        break;
+    case ':':
+        token.type = TokenType::COLON;
+        break;
+    case '{':
+        token.type = TokenType::L_BRACE;
+        break;
+    case '}':
+        token.type = TokenType::R_BRACE;
+        break;
+    case '(':
+        token.type = TokenType::L_PARENTHESES;
+        break;
+    case ')':
+        token.type = TokenType::R_PARENTHESES;
+        break;
+    }
+    return token;
+}
+
+Token Tokenizer::parseNumber()
+{
+    if( ! ('0' <= m_source[m_offset] && m_source[m_offset] <='9'))
+    {
+        return Token{TokenType::ERROR};
+    }
+
+
+    string value = "";
+    while (isDigit(m_source[m_offset]))
+    {
+        value += m_source[m_offset++];
+    }
+    
+
+    Token token;
+    token.type = TokenType::CONSTANT;
+    token.data = new string(value);
     return token;
 }
 

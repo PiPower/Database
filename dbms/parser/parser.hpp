@@ -5,9 +5,23 @@
 #include "tokenizer.hpp"
 #include <setjmp.h>
 
+enum class AstNodeType
+{
+    IDENTIFIER,
+    CREATE_TABLE,
+    PARAMS,
+    CONSTANT,
+    // types
+    NUMBER_32, CHAR
+
+};
+
+
 struct AstNode
 {
+    AstNodeType type;
     std::vector<AstNode*> child;
+    void* data;
 };
 
 
@@ -24,9 +38,17 @@ struct ParsingState
 
 
 void consumeToken(ParsingState& state, TokenType typ);
+AstNode* allocateNode(ParsingState& state);
+void freeNode(AstNode* node);
+void triggerParserError(ParsingState& state, int value);
 
 AstNode* parse(const char* text);
 AstNode* parseStatement(ParsingState& state);
 AstNode* parseCreateTableStatement(ParsingState& state);
-AstNode* allocateNode(ParsingState& state);
+AstNode* parsePrimary(ParsingState& state);
+AstNode* parseParameter(ParsingState& state);
+AstNode* parseDataType(ParsingState& state);
+AstNode* parseIdentifier(ParsingState& state);
+AstNode* parseNumber(ParsingState& state);
+
 #endif

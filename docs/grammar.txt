@@ -6,7 +6,10 @@
 // symbol? <- symbol appears zero or one time but no more than once 
 // grammar is not case sensitive, exceptions are explicitly stated
 // "symbol" is to be treated as token
-// ' ' '\t' ||  source[offset] == '\r' || source[offset] == '\n'
+// ' ' '\t' ||   '\r' || '\n' are whitespace to be skipped unless explicitly stated
+// character sequence in "***" is to be treated as literal for example "xyz" represnt xyz symbol in source code
+//------------------------------------------------------------
+//-----------------------GRAMMAR------------------------------
 //------------------------------------------------------------
 
 whitespace:
@@ -33,14 +36,16 @@ keyword one of:
     CREATE | TABLE
 
 char:
-    identifier "(" number ")"
+    "char" "(" number ")"
 
 data_type:
-    "INT" | char
+    "int" | char
 
+parameter:
+    identifier data_type
 
 create_table_statement:
-    "CREATE" "TABLE"  identifier "("  (identifier data_type)+ ")"
+    "CREATE" "TABLE"  identifier "(" parameter  ("," parameter)* ")"
 
 
 statement:

@@ -7,7 +7,7 @@ using namespace std;
 
 int main()
 {
-    string msg = "CREATE TABE Workers(name char(34), surname char(34), age INT);";
+    string msg = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(34) );";
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     errorCheck(sock);

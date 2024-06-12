@@ -7,13 +7,21 @@ enum class TokenType
 {
     NONE, ERROR, IDENTIFIER, END_OF_FILE,
     // keywords
-    CREATE, TABLE
+    CREATE, TABLE, FROM, INT, CHAR,
+    // separators
+    L_BRACKET,  R_BRACKET, L_PARENTHESES,  R_PARENTHESES, 
+    L_BRACE, R_BRACE,
+    // miscallenous
+     COLON, COMMA , SEMICOLON, DOT,
+    //types
+    CONSTANT
 };
 
 
 struct Token
 {
     TokenType type;
+    void *data;
 };
 
 
@@ -24,10 +32,12 @@ public:
     Tokenizer(const char* sourceCode);
     Token scan();
     Token peekToken();
-    bool match(TokenType type);
+
 private:
     void keywordMapInit();
     Token parseIdentifier();
+    Token parsePunctuators();
+    Token parseNumber();
 
     bool isDigit(const char& c);
     bool isAlpha(const char& c);
