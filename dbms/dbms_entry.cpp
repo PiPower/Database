@@ -33,7 +33,5 @@ int main()
         recv(client, buffer, 400, 0);
 
         parse(buffer);
-
-
     }  
 }

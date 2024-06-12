@@ -15,8 +15,14 @@ whitespace:
 digit:
     0 | 1 | ... | 9
 
+non_zero_digit:
+     1 | ... | 9
 alpha: 
     a | b | ... | z | A | B | ... | Z 
+
+number:
+    0 | (non_zero_digit  digit*)
+
 non-digit:
     alpha | _
 
@@ -24,16 +30,19 @@ identifier:
     non-digit (digit | non-digit)*
 
 keyword one of:
-    CREATE, TABLE
+    CREATE | TABLE
+
+char:
+    identifier "(" number ")"
 
 data_type:
-    int32 | string
+    "INT" | char
 
 
-create_db_statement
-    CREATE TABLE  identifier "("  (identifier data_type)+ ")"
+create_table_statement:
+    "CREATE" "TABLE"  identifier "("  (identifier data_type)+ ")"
 
 
 statement:
-    create_db_statement ";"
+    create_table_statement ";"
 

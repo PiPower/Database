@@ -42,6 +42,7 @@ Token Tokenizer::peekToken()
     return token;
 }
 
+
 void Tokenizer::keywordMapInit()
 {
     m_keywordMap["create"] = TokenType::CREATE;
@@ -50,7 +51,7 @@ void Tokenizer::keywordMapInit()
 
 Token Tokenizer::parseIdentifier()
 {
-     if(isDigit(m_source[m_offset]))
+    if(isDigit(m_source[m_offset]))
     {
         return Token{TokenType::NONE};
     }

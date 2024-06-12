@@ -5,7 +5,7 @@
 #include <string>
 enum class TokenType
 {
-    NONE, IDENTIFIER, END_OF_FILE,
+    NONE, ERROR, IDENTIFIER, END_OF_FILE,
     // keywords
     CREATE, TABLE
 };
@@ -25,7 +25,6 @@ public:
     Token scan();
     Token peekToken();
     bool match(TokenType type);
-    void consume(TokenType type);
 private:
     void keywordMapInit();
     Token parseIdentifier();
