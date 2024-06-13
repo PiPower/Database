@@ -8,8 +8,8 @@ void consumeToken(ParsingState &state, TokenType type)
     Token token =  state.tokenizer.scan();
     if(token.type != type)
     {
-        dprintf(2, "invalid character in query\n");
-        triggerParserError(state, 0);
+        dprintf(2, "unexpected token in query\n");
+        triggerParserError(state, 0, "unexpected token in query\n");
     }
 }
 
@@ -28,7 +28,8 @@ AstNode *parse(const char *text)
         {
             freeNode(node);
         }
-        statement = nullptr;
+        statement = new AstNode{AstNodeType::ERROR};
+        statement->data = new string( state.errorMessage );
     }
     return statement;
 }
@@ -66,7 +67,7 @@ AstNode *parseCreateTableStatement(ParsingState &state)
 
     if(token.type != TokenType::R_PARENTHESES)
     {
-        triggerParserError(state, 0);
+        triggerParserError(state, 0, "Expected \')\' \n");
     }
     
     return node;
@@ -122,7 +123,7 @@ AstNode *parseDataType(ParsingState &state)
         break;
         }
     default:
-        triggerParserError(state, 0);
+        triggerParserError(state, 0, "Unexpected data type\n");
         break;
     }
     return type;
@@ -133,7 +134,7 @@ AstNode *parseIdentifier(ParsingState &state)
     Token token = state.tokenizer.scan();
     if(token.type != TokenType::IDENTIFIER)
     {
-        triggerParserError(state, 0);
+        triggerParserError(state, 0, "Expected identifier\n");
     }
 
     AstNode* node = allocateNode(state);
@@ -147,7 +148,7 @@ AstNode *parseNumber(ParsingState &state)
     Token token = state.tokenizer.scan();
     if(token.type != TokenType::CONSTANT)
     {
-        triggerParserError(state, 0);
+        triggerParserError(state, 0, "Expected constant\n");
     }
 
     AstNode* node = allocateNode(state);
@@ -178,8 +179,9 @@ void freeNode(AstNode *node)
 
 }
 
-void triggerParserError(ParsingState &state, int value)
+void triggerParserError(ParsingState &state, int value, const char* errorMessage)
 {
     state.invalidQuery = true;
+    state.errorMessage = errorMessage;
     longjmp(state.buff, value);
 }

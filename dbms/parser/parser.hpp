@@ -7,10 +7,9 @@
 
 enum class AstNodeType
 {
-    IDENTIFIER,
-    CREATE_TABLE,
-    PARAMS,
-    CONSTANT,
+    //misc
+    IDENTIFIER,  CREATE_TABLE,
+    PARAMS, CONSTANT, ERROR,
     // types
     NUMBER_32, CHAR
 
@@ -33,6 +32,7 @@ struct ParsingState
     bool invalidQuery;
     std::vector<AstNode*> allNodes;
     jmp_buf buff;
+    const char* errorMessage;
 };
 
 
@@ -40,7 +40,7 @@ struct ParsingState
 void consumeToken(ParsingState& state, TokenType typ);
 AstNode* allocateNode(ParsingState& state);
 void freeNode(AstNode* node);
-void triggerParserError(ParsingState& state, int value);
+void triggerParserError(ParsingState& state, int value, const char* errorMessage = nullptr);
 
 AstNode* parse(const char* text);
 AstNode* parseStatement(ParsingState& state);
