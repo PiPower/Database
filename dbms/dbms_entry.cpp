@@ -32,7 +32,7 @@ int main()
     {
         sockaddr_in clientAddr;
         socklen_t len;
-#ifndef DEBUG
+#ifdef REMOTE_CLIENT
         int client = accept(sock,  (sockaddr*)&clientAddr, &len);
         errorCheck(client);
         recv(client, buffer, 400, 0);
