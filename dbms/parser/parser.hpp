@@ -11,7 +11,7 @@ enum class AstNodeType
     IDENTIFIER,  CREATE_TABLE,
     PARAMS, CONSTANT, ERROR,
     // types
-    NUMBER_32, CHAR
+    INT_32, CHAR
 
 };
 

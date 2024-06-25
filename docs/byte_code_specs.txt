@@ -1,0 +1,24 @@
+// file contains specification of byte code used by data base
+// virtual machine
+// each instruction is specified in formar:
+// Name; Description, byte structure
+//------------------------------------------------------------
+//------------------HELP STRUCTURES---------------------------
+//------------------------------------------------------------
+
+machine_types:
+    uint16
+    int32
+    null terminated string
+
+types:
+    char; id(uint16) | char size (uint16)
+    int_32; id(uint16)
+
+//------------------------------------------------------------
+//-------------------BYTE CODE ISA----------------------------
+//------------------------------------------------------------
+
+CREATE_TABLE; creates table; table name(null terminated string) | arg count ( uint16 ) | type_1, ..., type_k 
+where 
+type_j = one of types | type name(null terminated string)

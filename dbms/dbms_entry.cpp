@@ -5,10 +5,14 @@
 #include "parser/parser.hpp"
 #include <stdio.h>
 #include <iostream>
+#include <string.h>
+#include "backend/vm.hpp"
+#include "backend/compiler.hpp"
 using namespace std;
 
 int main()
 {
+    VirtualMachine executor;
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     errorCheck(sock);
 
@@ -28,10 +32,16 @@ int main()
     {
         sockaddr_in clientAddr;
         socklen_t len;
+#ifndef DEBUG
         int client = accept(sock,  (sockaddr*)&clientAddr, &len);
         errorCheck(client);
         recv(client, buffer, 400, 0);
-
-        parse(buffer);
+#else
+        const char* bufferTemp = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(34) );";
+        memcpy(buffer, bufferTemp, 96);
+#endif
+        AstNode* query = parse(buffer);
+        InstructionData* byteCode = compile(query);
+        executor.exectue(byteCode) ;
     }  
 }

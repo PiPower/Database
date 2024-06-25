@@ -111,7 +111,7 @@ AstNode *parseDataType(ParsingState &state)
     {
     case TokenType::INT:
         type = allocateNode(state);
-        type->type= AstNodeType::NUMBER_32;
+        type->type= AstNodeType::INT_32;
         break;
     case TokenType::CHAR:
         {
@@ -152,7 +152,7 @@ AstNode *parseNumber(ParsingState &state)
     }
 
     AstNode* node = allocateNode(state);
-    node->type = AstNodeType::IDENTIFIER;
+    node->type = AstNodeType::CONSTANT;
     node->data = token.data;
     return node;
 }
