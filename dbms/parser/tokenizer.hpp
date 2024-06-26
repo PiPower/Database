@@ -3,18 +3,20 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <queue>
 enum class TokenType
 {
     NONE, ERROR, IDENTIFIER, END_OF_FILE,
     // keywords
-    CREATE, TABLE, FROM, INT, CHAR,
+    CREATE, TABLE, FROM, INT, CHAR, INSERT,
+    INTO, VALUES,
     // separators
     L_BRACKET,  R_BRACKET, L_PARENTHESES,  R_PARENTHESES, 
     L_BRACE, R_BRACE,
     // miscallenous
      COLON, COMMA , SEMICOLON, DOT,
     //types
-    CONSTANT
+    CONSTANT, STRING
 };
 
 
@@ -32,12 +34,13 @@ public:
     Tokenizer(const char* sourceCode);
     Token scan();
     Token peekToken();
-
+    void putback(Token token);
 private:
     void keywordMapInit();
     Token parseIdentifier();
     Token parsePunctuators();
     Token parseNumber();
+    Token parseString();
 
     bool isDigit(const char& c);
     bool isAlpha(const char& c);
@@ -46,7 +49,8 @@ private:
 private:
     unsigned int m_offset;
     const char* m_source;
-    std::unordered_map<std::string, TokenType> m_keywordMap;
+    std::unordered_map<std::string, TokenType> m_keywordMap;\
+    std::queue<Token> putbackQueue;
 };
 
 

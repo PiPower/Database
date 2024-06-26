@@ -37,12 +37,18 @@ AstNode *parse(const char *text)
 AstNode* parseStatement(ParsingState& state)
 {
     Token token =  state.tokenizer.scan();
+    AstNode* statement = nullptr;
     switch (token.type)
     {
     case TokenType::CREATE:
-        return parseCreateTableStatement(state);
+        statement = parseCreateTableStatement(state);
+        break;
+    case TokenType::INSERT:
+        statement = parseInsertStatement(state);
     }
-    return nullptr;
+
+    consumeToken(state, TokenType::SEMICOLON);
+    return statement;
 }
 
 
@@ -57,6 +63,7 @@ AstNode *parseCreateTableStatement(ParsingState &state)
     node->child.push_back( identifier );
     consumeToken(state, TokenType::L_PARENTHESES);
     Token token;
+    
     do
     {
         AstNode* param = parseParameter(state);
@@ -64,13 +71,43 @@ AstNode *parseCreateTableStatement(ParsingState &state)
         token = state.tokenizer.scan();
     } while (token.type == TokenType::COMMA );
     
-
-    if(token.type != TokenType::R_PARENTHESES)
-    {
-        triggerParserError(state, 0, "Expected \')\' \n");
-    }
+    state.tokenizer.putback(token);
+    consumeToken(state, TokenType::R_PARENTHESES);
     
     return node;
+}
+
+AstNode *parseInsertStatement(ParsingState &state)
+{
+    AstNode* root = allocateNode(state);
+    root->type = AstNodeType::INSERT;
+
+    consumeToken(state, TokenType::INTO);
+    AstNode* tableName = parseIdentifier(state);
+    root->child.push_back(tableName);
+
+    consumeToken(state, TokenType::VALUES);
+    Token token;
+    do
+    {   
+        AstNode* args = allocateNode(state);
+        args->type = AstNodeType::INSERT_ARGS;
+        root->child.push_back(args);
+        consumeToken(state, TokenType::L_PARENTHESES);
+
+        do
+        {
+            args->child.push_back( parseArgument(state) );
+            token = state.tokenizer.scan();
+        } while (token.type == TokenType::COMMA );
+        state.tokenizer.putback(token);
+        consumeToken(state, TokenType::R_PARENTHESES);
+
+        token = state.tokenizer.scan();
+    } while (token.type == TokenType::COMMA);
+
+    state.tokenizer.putback(token);
+    return root;
 }
 
 AstNode *parsePrimary(ParsingState &state)
@@ -155,6 +192,33 @@ AstNode *parseNumber(ParsingState &state)
     node->type = AstNodeType::CONSTANT;
     node->data = token.data;
     return node;
+}
+
+AstNode *parseArgument(ParsingState &state)
+{
+    Token token = state.tokenizer.scan();
+    if(token.type != TokenType::STRING && token.type != TokenType::CONSTANT)
+    {
+        triggerParserError(state, 0, "Unsupported type in argument");
+    }
+    AstNode* argument = allocateNode(state);
+
+    switch (token.type)
+    {
+    case TokenType::STRING:
+        argument->type = AstNodeType::STRING;
+        argument->data = token.data;
+        break;
+    case TokenType::CONSTANT:
+        argument->type = AstNodeType::CONSTANT;
+        argument->data = token.data;
+        break;
+    default:
+        triggerParserError(state, 0, "Unsupported type in argument");
+        break;
+    }
+
+    return argument;
 }
 
 AstNode *allocateNode(ParsingState& state)

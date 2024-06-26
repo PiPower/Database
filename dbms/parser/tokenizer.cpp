@@ -13,6 +13,14 @@ m_source(sourceCode), m_offset(0)
 
 Token Tokenizer::scan()
 {
+
+    if( putbackQueue.size() != 0 )
+    {
+        Token out = putbackQueue.front();
+        putbackQueue.pop();
+        return out;
+    }
+
     while (true)
     {
     
@@ -52,6 +60,10 @@ Token Tokenizer::peekToken()
     return token;
 }
 
+void Tokenizer::putback(Token token)
+{   
+    putbackQueue.push(move(token));
+}
 
 void Tokenizer::keywordMapInit()
 {
@@ -60,6 +72,9 @@ void Tokenizer::keywordMapInit()
     m_keywordMap["int"] = TokenType::INT;
     m_keywordMap["char"] = TokenType::CHAR;
     m_keywordMap["from"] = TokenType::FROM;
+    m_keywordMap["insert"] = TokenType::INSERT;
+    m_keywordMap["into"] = TokenType::INTO;
+    m_keywordMap["values"] = TokenType::VALUES;
 }
 
 Token Tokenizer::parseIdentifier()
@@ -118,6 +133,9 @@ Token Tokenizer::parsePunctuators()
     case ')':
         token.type = TokenType::R_PARENTHESES;
         break;
+    case '\'':
+        return parseString();
+        break;
     }
     return token;
 }
@@ -140,6 +158,24 @@ Token Tokenizer::parseNumber()
     Token token;
     token.type = TokenType::CONSTANT;
     token.data = new string(value);
+    return token;
+}
+
+Token Tokenizer::parseString()
+{
+    m_offset++;
+
+    Token token;
+    token.type = TokenType::STRING;
+    const char * stringStart = m_source + m_offset;
+    unsigned int size = 0;
+    while (m_source[m_offset] != '\'')
+    {
+        size++;
+        m_offset++;
+    }
+    string* str = new string(stringStart, size);
+    token.data = str;
     return token;
 }
 

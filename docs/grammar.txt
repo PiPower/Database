@@ -13,10 +13,13 @@
 //------------------------------------------------------------
 
 whitespace:
- ' ' | \t | \r | '\n'
+ " " | \t | \r | \n
 
 digit:
     0 | 1 | ... | 9
+
+punctuator:
+    ; | , | . 
 
 non_zero_digit:
      1 | ... | 9
@@ -28,6 +31,9 @@ number:
 
 non-digit:
     alpha | _
+
+string:
+    "'" (whitespace | non-digit | digit | punctuator) "'"
 
 identifier:
     non-digit (digit | non-digit)*
@@ -47,7 +53,12 @@ parameter:
 create_table_statement:
     "CREATE" "TABLE"  identifier "(" parameter  ("," parameter)* ")"
 
+argument:
+    string | number
+
+insert_statement:
+    "INSERT" "INTO" identifier "VALUES"  "(" argument,  ("," argument)*    ")"   ( "," "(" argument,  ("," argument)*    ")" )*
 
 statement:
-    create_table_statement ";"
+    (create_table_statement | insert_statement) ";"
 

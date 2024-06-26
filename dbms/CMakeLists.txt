@@ -1,4 +1,3 @@
-project(Database_Management_System)
 cmake_minimum_required(VERSION 3.22.1)
 
 file(GLOB parse_module parser/*.cpp)
