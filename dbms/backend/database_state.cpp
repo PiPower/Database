@@ -8,3 +8,7 @@ void createTable(DatabaseState& database, std::string&& tableName, std::vector<C
     table->pages.push_back( new Page() );
     database.tables[move(tableName)] = table;
 }
+
+void insertIntoTable(DatabaseState &database, std::string &&tableName)
+{
+}

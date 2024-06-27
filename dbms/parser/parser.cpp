@@ -45,6 +45,7 @@ AstNode* parseStatement(ParsingState& state)
         break;
     case TokenType::INSERT:
         statement = parseInsertStatement(state);
+        break;
     }
 
     consumeToken(state, TokenType::SEMICOLON);
@@ -85,7 +86,7 @@ AstNode *parseInsertStatement(ParsingState &state)
     consumeToken(state, TokenType::INTO);
     AstNode* tableName = parseIdentifier(state);
     root->child.push_back(tableName);
-
+    root->child.push_back(nullptr);
     consumeToken(state, TokenType::VALUES);
     Token token;
     do

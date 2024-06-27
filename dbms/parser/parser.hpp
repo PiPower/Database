@@ -13,7 +13,6 @@ enum class AstNodeType
     INSERT, INSERT_ARGS,
     // types
     INT_32, CHAR, STRING
-
 };
 
 

@@ -33,7 +33,7 @@ non-digit:
     alpha | _
 
 string:
-    "'" (whitespace | non-digit | digit | punctuator) "'"
+    "'" (whitespace | non-digit | digit | punctuator)* "'"
 
 identifier:
     non-digit (digit | non-digit)*

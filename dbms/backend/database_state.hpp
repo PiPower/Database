@@ -9,7 +9,7 @@
 struct Page
 {
     void* data;
-
+    unsigned int elemenetsOffset[32];
 };
 
 
@@ -36,5 +36,6 @@ struct DatabaseState
 
 
 void createTable(DatabaseState& database, std::string&& tableName, std::vector<ColumnType>&& columns);
+void insertIntoTable(DatabaseState& database, std::string&& tableName);
 
 #endif
