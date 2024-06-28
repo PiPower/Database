@@ -75,12 +75,15 @@ std::vector<MachineDataTypes> inferMachineDataTypes(AstNode* args)
     return types;
 }
 
-InstructionData *compile(AstNode *query)
+InstructionData* compile(const vector<AstNode*>& queries)
 {
     CompilationState state;
     state.instructionData = createInstructionData();
-    compileStatement(state, query);
-
+    for(AstNode* query : queries)
+    {
+        compileStatement(state, query);
+    }
+    emitInstruction(OpCodes::EXIT, state.instructionData);
     return state.instructionData;
 }
 
@@ -127,7 +130,7 @@ void serializeDataType(AstNode *type, InstructionData* byteCode)
     case AstNodeType::INT_32 :
     {
         string* name = (string*)type->child[0]->data;
-        constexpr uint16_t typeID = (uint16_t)DataTypes::INT_32;
+        constexpr uint16_t typeID = (uint16_t)DataTypes::INT;
         emitPayload(byteCode, &typeID, sizeof(uint16_t));
         emitPayload(byteCode, name->c_str(), name->size() + 1);
     } return;

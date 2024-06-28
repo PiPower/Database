@@ -13,25 +13,31 @@ void consumeToken(ParsingState &state, TokenType type)
     }
 }
 
-AstNode *parse(const char *text)
+std::vector<AstNode*> parse(const char *text)
 {
     ParsingState state{text, 0 , Tokenizer{text}, false };
-    AstNode* statement;
+    vector<AstNode*> statements;
     setjmp(state.buff);
-    if(!state.invalidQuery)
+    while (state.tokenizer.peekToken().type != TokenType::END_OF_FILE)
     {
-        statement = parseStatement(state);
-    }
-    else
-    {
-        for(AstNode* node : state.allNodes)
+    
+        if(!state.invalidQuery)
         {
-            freeNode(node);
+            statements.push_back( parseStatement(state) );
         }
-        statement = new AstNode{AstNodeType::ERROR};
-        statement->data = new string( state.errorMessage );
+        else
+        {
+            for(AstNode* node : state.allNodes)
+            {
+                freeNode(node);
+            }
+            statements.clear();
+            statements.push_back( new AstNode{AstNodeType::ERROR} );
+            statements[0]->data = new string( state.errorMessage );
+        }
+
     }
-    return statement;
+    return statements;
 }
 
 AstNode* parseStatement(ParsingState& state)

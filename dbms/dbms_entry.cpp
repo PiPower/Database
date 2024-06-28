@@ -36,13 +36,16 @@ int main()
         int client = accept(sock,  (sockaddr*)&clientAddr, &len);
         errorCheck(client);
         recv(client, buffer, 400, 0);
-#else
-        //const char* bufferTemp = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(34) );";
-        const char* bufferTemp = "INSERT Into Workers VALUES(\'Jan\', \'Kowalski\', 31, 1232445, \'Janina\' ), (\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'Jagna\' );";
-        memcpy(buffer, bufferTemp, 119);
-#endif
         AstNode* query = parse(buffer);
         InstructionData* byteCode = compile(query);
-        executor.exectue(byteCode) ;
+        executor.execute(byteCode) ;
+#else
+        //const char* bufferTemp = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(34) );";
+        const char* bufferTemp = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(34) ); INSERT Into Workers VALUES(\'Jan\', \'Kowalski\', 31, 1232445, \'Janina\' ), (\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'Jagna\' );";
+        memcpy(buffer, bufferTemp, 215);
+#endif
+        vector<AstNode*> queries = parse(buffer);
+        InstructionData* byteCode = compile(queries);
+        executor.execute(byteCode) ;
     }  
 }

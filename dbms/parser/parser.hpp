@@ -42,7 +42,7 @@ AstNode* allocateNode(ParsingState& state);
 void freeNode(AstNode* node);
 void triggerParserError(ParsingState& state, int value, const char* errorMessage = nullptr);
 
-AstNode* parse(const char* text);
+std::vector<AstNode*> parse(const char* text);
 AstNode* parseStatement(ParsingState& state);
 AstNode* parseCreateTableStatement(ParsingState& state);
 AstNode* parseInsertStatement(ParsingState& state);

@@ -23,11 +23,14 @@ Token Tokenizer::scan()
 
     while (true)
     {
-    
         if(m_source[m_offset] == ' ' ||  m_source[m_offset] == '\t' ||  m_source[m_offset] == '\r' || m_source[m_offset] == '\n')
         {
             m_offset++;
             continue;
+        }
+        if( m_source[m_offset] == '\0')
+        {
+            return Token{TokenType::END_OF_FILE};
         }
         Token t = parsePunctuators();
         if(t.type != TokenType::NONE)

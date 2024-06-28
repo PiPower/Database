@@ -6,18 +6,21 @@
 enum class OpCodes
 {
     CREATE_TABLE,
-    INSERT
+    INSERT,
+    EXIT,
+    INSTRUCTION_COUNT
 };
 
 enum class DataTypes
 {
     NONE,
-    INT_32,
+    INT,
     CHAR,
 };
 
 enum class MachineDataTypes
 {
+    NONE,
     INT32,
     STRING
 };
@@ -48,7 +51,7 @@ void emitInstructionWithPayload(OpCodes opCode, InstructionData* data,const void
 char* skipBytes(InstructionData* data, unsigned int size);
 void fillSkippedBytes(InstructionData* data, char* pos, void* payload, unsigned int size);
 
-InstructionData* compile(AstNode* query);
+InstructionData* compile(const std::vector<AstNode*>& queries);
 void compileCreateTable(CompilationState& state, AstNode *query);
 void compileInsert(CompilationState& state, AstNode *query);
 void compileStatement(CompilationState& state, AstNode *query);

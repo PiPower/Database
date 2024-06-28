@@ -7,6 +7,7 @@
 // for example constants that are <= 32767 should be assigned
 // int16. Types can be freerly casted to types that take more
 // space but narrowing conventions are forbidden.
+// NULL is represented by setting all bits to 1 of given type.
 //------------------------------------------------------------
 //------------------HELP STRUCTURES---------------------------
 //------------------------------------------------------------
@@ -14,7 +15,8 @@
 machine_types:
     int32
     null terminated string
-
+    string
+    
 abstract_types:
     char; id(uint16) | char size (uint16)
     int_32; id(uint16)
@@ -30,9 +32,9 @@ type_j = one of abstract_types | type name(null terminated string)
 
 
 insert_header:
-    column_count(uint16) | column_name_1 ,..., column_name_column_count | arg_count ( uint16 ) | arg_1_offset(uint32), ..., arg_k_offset(uint32) 
+    column_count(uint16) | column_name_1(null terminated string) ,..., column_name_column_count(null terminated string) | arg_count ( uint16 ) | arg_1_offset(uint32), ..., arg_k_offset(uint32) 
 // if column_count == 0 then it is assumed that columns are stored in table order
-// offset are calculated from first byte after arg_count
+// offsets are calculated from first byte after arg_count
 INSERT; insert into specifier name; table name(null terminated string) | insert_header | arg_1, ..., arg_k 
 where
 arg_j = ( machine_type_id(uint16)  | machine_type )_1 | ... | ( machine_type_id(uint16)  | machine_type )_column_count

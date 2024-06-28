@@ -1,42 +1,35 @@
 #include "vm.hpp"
 using namespace std;
 
-DatabaseState* VirtualMachine::dbState = nullptr;
+DatabaseState* VirtualMachine::databaseState = nullptr;
+Operation VirtualMachine::operationTable[(unsigned int)OpCodes::INSTRUCTION_COUNT] = 
+{
+    &VirtualMachine::executeCreateDatase,
+    &VirtualMachine::executeInsertInto,
+    nullptr // exit is handled in execute function
+};
+
 
 VirtualMachine::VirtualMachine()
 :
 m_ip(nullptr)
 {
-    dbState = new DatabaseState();
+    databaseState = new DatabaseState();
 }
 
-char *VirtualMachine::exectue(const InstructionData *byteCode)
+char *VirtualMachine::execute(const InstructionData *byteCode)
 {
     m_ip = byteCode->base;
-    OpCodes op = fetchInstruction();
-    switch (op)
+    while (true)
     {
-    case OpCodes::CREATE_TABLE:
+        OpCodes op = fetchInstruction();
+        if(op == OpCodes::EXIT)
         {
-            string tableName = m_ip;
-            m_ip += tableName.size() + 1;
-
-            uint16_t argCount = fetchUint16();
-            vector<ColumnType> columnTypes;
-            for(int i =0; i < argCount; i++)
-            {
-                ColumnType type = fetchDataType();
-                type.columnName =  m_ip;
-                m_ip += type.columnName.size() + 1;
-                columnTypes.push_back(type);
-            }
-
-            createTable(*dbState, move(tableName), move(columnTypes) );
+            return nullptr;
         }
-        break;
-    
-    default:
-        break;
+        
+        (this->*operationTable[(unsigned int) op] )( nullptr);
+
     }
     return nullptr;
 }
@@ -51,8 +44,14 @@ OpCodes VirtualMachine::fetchInstruction()
 uint16_t VirtualMachine::fetchUint16()
 {
     uint16_t bytes = *(uint16_t*) m_ip;
-    m_ip += 2;
+    m_ip += sizeof(uint16_t);
     return bytes;
+}
+
+uint16_t VirtualMachine::fetchUint32()
+{
+    m_ip+=sizeof(uint32_t);
+    return *(uint32_t*)(m_ip - sizeof(uint32_t));
 }
 
 ColumnType VirtualMachine::fetchDataType()
@@ -63,13 +62,51 @@ ColumnType VirtualMachine::fetchDataType()
     case DataTypes::CHAR:
         {
             uint16_t size = fetchUint16();
-            return ColumnType{DataTypes::CHAR, size};
+            return ColumnType{MachineDataTypes::STRING, type,  size};
         }
-    case DataTypes::INT_32:
-        return ColumnType{DataTypes::INT_32, 2};
+    case DataTypes::INT:
+        return ColumnType{MachineDataTypes::INT32, type, 4};
         
     default:
         break;
     }
-    return ColumnType{DataTypes::NONE, 0};
+    return ColumnType{MachineDataTypes::NONE, type, 0};
+}
+
+void VirtualMachine::executeCreateDatase(void*)
+{
+    string tableName = m_ip;
+    m_ip += tableName.size() + 1;
+
+    uint16_t argCount = fetchUint16();
+    vector<ColumnType> columnTypes;
+    for(int i =0; i < argCount; i++)
+    {
+        ColumnType type = fetchDataType();
+        type.columnName =  m_ip;
+        m_ip += type.columnName.size() + 1;
+        columnTypes.push_back(type);
+    }
+
+    createTable(databaseState, move(tableName), move(columnTypes) );
+}
+
+void VirtualMachine::executeInsertInto(void *)
+{
+    string tableName = m_ip;
+    m_ip += tableName.size() + 1;
+
+    uint16_t columnCount = fetchUint16();
+    uint16_t argumentCount = fetchUint16();
+
+    std::vector<string> colNames;
+    std::vector<uint32_t> argOffset;
+    for(uint16_t i = 0; i < argumentCount; i++)
+    {
+        argOffset.push_back(fetchUint32());
+    }
+    unsigned int offset;
+    insertIntoTable(databaseState, tableName, colNames, argOffset, m_ip, offset);
+    m_ip += offset;
+
 }

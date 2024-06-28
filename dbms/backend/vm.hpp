@@ -3,17 +3,27 @@
 #include "database_state.hpp"
 #include "compiler.hpp"
 
+class VirtualMachine;
+typedef void (VirtualMachine::*Operation)(void*);
+
+
 class VirtualMachine
 {
 public:
     VirtualMachine();
-    char* exectue(const InstructionData* byteCode);
+    char* execute(const InstructionData* byteCode);
     OpCodes fetchInstruction();
     uint16_t fetchUint16();
+    uint16_t fetchUint32();
     ColumnType fetchDataType();
 private:
-    static DatabaseState* dbState;
+    // ops
+    void executeCreateDatase(void*);
+    void executeInsertInto(void*);
+private:
+    static DatabaseState* databaseState;
     char* m_ip;
+    static Operation operationTable[(unsigned int)OpCodes::INSTRUCTION_COUNT];
 };
 
 
