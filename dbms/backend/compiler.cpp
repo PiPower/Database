@@ -150,12 +150,12 @@ unsigned int serializeMachineDataType(const MachineDataTypes &type, AstNode* val
             uint16_t type = (uint16_t) MachineDataTypes::INT32;
             emitPayload(byteCode, &type, sizeof(uint16_t));
             emitPayload(byteCode, &valueBinary, sizeof(int));
-            outSize = sizeof(int);
+            outSize = sizeof(int) + sizeof(uint16_t);
         }return outSize;
     case MachineDataTypes::STRING :
         {
             string*  storedString = (string*)(value->data) ;
-            outSize = storedString->size() + 1;
+            outSize = storedString->size() + 1 + sizeof(uint16_t);
             uint16_t type = (uint16_t) MachineDataTypes::STRING;
             emitPayload(byteCode, &type, sizeof(uint16_t));
             emitPayload(byteCode, storedString->c_str(), storedString->size() + 1);

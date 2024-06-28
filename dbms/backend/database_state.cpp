@@ -15,7 +15,8 @@ void createTable(DatabaseState* database, std::string&& tableName, std::vector<C
          table->maxEntrySize += col.size;
     }
     Page* page= new Page();
-    page->data = new char[16384];
+    page->dataBase = new char[PAGE_SIZE];
+    page->pageCurrent = page->dataBase;
     table->pages.push_back( page );
     database->tables[move(tableName)] = table;
 }
@@ -34,10 +35,10 @@ void insertIntoTable(DatabaseState* database,const std::string& tableName,
 
     char* scratchPad = new char[tableIter->second->maxEntrySize];
     char* currScratchPad;
+    unsigned int bytecodeSize;
     for(size_t i=0; i < argOffsets.size(); i++)
     {
-        uint32_t currentOffset = argOffsets[i];
-        char* currentPtr = args + currentOffset;
+        char* currentPtr = args + argOffsets[i];
         currScratchPad = scratchPad;
         for(size_t j = 0; j < typeTable.size(); j++)
         {
@@ -52,8 +53,10 @@ void insertIntoTable(DatabaseState* database,const std::string& tableName,
             currScratchPad +=  typeTable[j].abstractType == DataTypes::CHAR ?  typeTable[j].size : offset;
             
         }
-        
+        bytecodeSize = currentPtr -  args - argOffsets[i];
+        insertIntoPage(tableIter->second, scratchPad, currScratchPad - scratchPad);
     }
+    bytesWritten = bytecodeSize + argOffsets[argOffsets.size() - 1 ];
 }
 
 uint32_t copyMachineDataType(char *scratchpad, ColumnType& columnDesc, char *sourceData, MachineDataTypes currentType)
@@ -77,4 +80,18 @@ uint32_t copyMachineDataType(char *scratchpad, ColumnType& columnDesc, char *sou
         break;
     }
     return copySize;
+}
+
+void insertIntoPage(TableState *table, char *data, uint32_t dataSize)
+{
+    Page* chosenPage = choosePage(table, dataSize);
+    uint32_t offset = chosenPage->pageCurrent - chosenPage->dataBase;
+    memcpy(chosenPage->pageCurrent, data, dataSize);
+    chosenPage->pageCurrent += dataSize;
+
+}
+
+Page *choosePage(TableState *table, uint32_t requiredSpace)
+{
+    return table->pages[0];
 }

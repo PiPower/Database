@@ -8,7 +8,8 @@
 
 struct Page
 {
-    char* data;
+    char* dataBase;
+    char* pageCurrent; // first unused byte in page
     std::vector<uint16_t> offsets;
 };
 
@@ -27,6 +28,7 @@ struct TableState
     std::vector<ColumnType> columns;
     unsigned int maxEntrySize;
     std::vector<Page*> pages;
+
 };
 
 struct DatabaseState
@@ -40,4 +42,6 @@ void createTable(DatabaseState* database, std::string&& tableName, std::vector<C
 void insertIntoTable(DatabaseState* database,const std::string& tableName,
                     const std::vector<std::string>& colNames, const std::vector<uint32_t> argOffsets, char* args, unsigned int& bytesWritten);
 uint32_t copyMachineDataType(char* scratchpad, ColumnType& columnDesc, char* sourceData, MachineDataTypes currentType);
+void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
+Page* choosePage(TableState* table,  uint32_t requiredSpace);
 #endif

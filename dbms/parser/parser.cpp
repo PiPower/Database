@@ -18,24 +18,19 @@ std::vector<AstNode*> parse(const char *text)
     ParsingState state{text, 0 , Tokenizer{text}, false };
     vector<AstNode*> statements;
     setjmp(state.buff);
+    if(state.invalidQuery)
+    {
+        for(AstNode* node : state.allNodes)
+        {
+            freeNode(node);
+        }
+        statements.clear();
+        statements.push_back( new AstNode{AstNodeType::ERROR} );
+        statements[0]->data = new string( state.errorMessage );
+    }
     while (state.tokenizer.peekToken().type != TokenType::END_OF_FILE)
     {
-    
-        if(!state.invalidQuery)
-        {
-            statements.push_back( parseStatement(state) );
-        }
-        else
-        {
-            for(AstNode* node : state.allNodes)
-            {
-                freeNode(node);
-            }
-            statements.clear();
-            statements.push_back( new AstNode{AstNodeType::ERROR} );
-            statements[0]->data = new string( state.errorMessage );
-        }
-
+        statements.push_back( parseStatement(state) );
     }
     return statements;
 }

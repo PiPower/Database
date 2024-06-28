@@ -41,8 +41,8 @@ int main()
         executor.execute(byteCode) ;
 #else
         //const char* bufferTemp = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(34) );";
-        const char* bufferTemp = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(34) ); INSERT Into Workers VALUES(\'Jan\', \'Kowalski\', 31, 1232445, \'Janina\' ), (\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'Jagna\' );";
-        memcpy(buffer, bufferTemp, 215);
+        const char* bufferTemp = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(7) ); INSERT Into Workers VALUES(\'Jan\', \'Kowalski\', 31, 1232445, \'Janina\' ), (\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'ASDFGHJ\' ), (\'TOmasz\', \'Walczewki\', 43, 6894, \'HAHAHAH\' );";
+        memcpy(buffer, bufferTemp, strlen( bufferTemp) + 1);
 #endif
         vector<AstNode*> queries = parse(buffer);
         InstructionData* byteCode = compile(queries);

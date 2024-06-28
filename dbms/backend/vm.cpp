@@ -105,7 +105,7 @@ void VirtualMachine::executeInsertInto(void *)
     {
         argOffset.push_back(fetchUint32());
     }
-    unsigned int offset;
+    unsigned int offset = 0;
     insertIntoTable(databaseState, tableName, colNames, argOffset, m_ip, offset);
     m_ip += offset;
 
