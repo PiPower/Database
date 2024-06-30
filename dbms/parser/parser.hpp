@@ -10,7 +10,8 @@ enum class AstNodeType
     //misc
     IDENTIFIER,  CREATE_TABLE,
     PARAMS, CONSTANT, ERROR,
-    INSERT, INSERT_ARGS,
+    INSERT, INSERT_ARGS, SELECT,
+    SELECT_ARGS,
     // types
     INT_32, CHAR, STRING
 };
@@ -46,6 +47,8 @@ std::vector<AstNode*> parse(const char* text);
 AstNode* parseStatement(ParsingState& state);
 AstNode* parseCreateTableStatement(ParsingState& state);
 AstNode* parseInsertStatement(ParsingState& state);
+AstNode* parseSelectStatement(ParsingState& state);
+
 AstNode* parsePrimary(ParsingState& state);
 AstNode* parseParameter(ParsingState& state);
 AstNode* parseDataType(ParsingState& state);

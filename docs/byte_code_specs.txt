@@ -30,11 +30,18 @@ CREATE_TABLE; creates table; table name(null terminated string) | arg_count ( ui
 where 
 type_j = one of abstract_types | type name(null terminated string)
 
+//------------------------------------------------------------
 
-insert_header:
-    column_count(uint16) | column_name_1(null terminated string) ,..., column_name_column_count(null terminated string) | arg_count ( uint16 ) | arg_1_offset(uint32), ..., arg_k_offset(uint32) 
-// if column_count == 0 then it is assumed that columns are stored in table order
-// offsets are calculated from first byte after arg_count
 INSERT; insert into specifier name; table name(null terminated string) | insert_header | arg_1, ..., arg_k 
 where
 arg_j = ( machine_type_id(uint16)  | machine_type )_1 | ... | ( machine_type_id(uint16)  | machine_type )_column_count
+
+insert_header:
+    column_count(uint16) | column_name_1(null terminated string) ,..., column_name_column_count(null terminated string) | arg_count ( uint16 )
+     | arg_1_offset(uint32), ..., arg_k_offset(uint32) 
+// if column_count == 0 then it is assumed that columns are stored in table order
+// offsets are calculated from first byte after arg_count
+
+//------------------------------------------------------------
+
+SELECT; select specified columns from database; table name(null terminated string) | column_count(uint16) | column_name_1(null terminated string), ... , column_name_column_count(null terminated string)

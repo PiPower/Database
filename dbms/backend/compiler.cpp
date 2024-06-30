@@ -107,6 +107,9 @@ void compileStatement(CompilationState &state, AstNode *query)
     case AstNodeType::INSERT:
         compileInsert(state, query);
         return;
+    case AstNodeType::SELECT:
+        compileSelect(state, query);
+        return;
     default:
         break;
     };
@@ -232,4 +235,18 @@ void compileInsert(CompilationState &state, AstNode *query)
     }
 
     fillSkippedBytes(state.instructionData, placeholder, header, memorySize);
+}
+
+void compileSelect(CompilationState &state, AstNode *query)
+{
+    string* tableName = ( string* )query->child[1]->data;
+    emitInstructionWithPayload(OpCodes::SELECT, state.instructionData, tableName->c_str(), tableName->size() + 1);
+    uint16_t colCount = query->child[0]->child.size();
+    emitPayload(state.instructionData, &colCount, sizeof(uint16_t));
+
+    for(AstNode* column: query->child[0]->child)
+    {
+        string* colName = (string*)column->data;
+        emitPayload(state.instructionData, colName->c_str(), colName->size() + 1);
+    }
 }

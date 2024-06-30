@@ -59,6 +59,12 @@ argument:
 insert_statement:
     "INSERT" "INTO" identifier "VALUES"  "(" argument,  ("," argument)*    ")"   ( "," "(" argument,  ("," argument)*    ")" )*
 
+select_args:
+    identifier 
+
+select_statement:
+    "SELECT" select_args ("," select_args)* "FROM" identifier
+    
 statement:
-    (create_table_statement | insert_statement) ";"
+    (create_table_statement | insert_statement | select_statement) ";"
 

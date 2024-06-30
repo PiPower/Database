@@ -8,6 +8,7 @@ enum class OpCodes
     CREATE_TABLE,
     INSERT,
     EXIT,
+    SELECT,
     INSTRUCTION_COUNT
 };
 
@@ -54,6 +55,7 @@ void fillSkippedBytes(InstructionData* data, char* pos, void* payload, unsigned 
 InstructionData* compile(const std::vector<AstNode*>& queries);
 void compileCreateTable(CompilationState& state, AstNode *query);
 void compileInsert(CompilationState& state, AstNode *query);
+void compileSelect(CompilationState& state, AstNode *query);
 void compileStatement(CompilationState& state, AstNode *query);
 
 std::vector<MachineDataTypes> inferMachineDataTypes(AstNode* args);

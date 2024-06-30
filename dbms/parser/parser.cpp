@@ -47,6 +47,9 @@ AstNode* parseStatement(ParsingState& state)
     case TokenType::INSERT:
         statement = parseInsertStatement(state);
         break;
+    case TokenType::SELECT:
+        statement = parseSelectStatement(state);
+        break;
     }
 
     consumeToken(state, TokenType::SEMICOLON);
@@ -109,6 +112,32 @@ AstNode *parseInsertStatement(ParsingState &state)
     } while (token.type == TokenType::COMMA);
 
     state.tokenizer.putback(token);
+    return root;
+}
+
+AstNode *parseSelectStatement(ParsingState &state)
+{
+    AstNode* root = allocateNode(state);
+    root->type = AstNodeType::SELECT;
+
+    AstNode* node = allocateNode(state);
+    node->type = AstNodeType::SELECT_ARGS;
+
+    root->child.push_back(node);
+    Token token;
+    do
+    {
+        AstNode* arg = parseIdentifier(state);
+        node->child.push_back(arg);
+
+        token = state.tokenizer.scan();
+    } while (token.type == TokenType::COMMA);
+    state.tokenizer.putback(token);
+
+    consumeToken(state, TokenType::FROM);
+
+    AstNode* tableName = parseIdentifier(state);
+    root->child.push_back(tableName);
     return root;
 }
 

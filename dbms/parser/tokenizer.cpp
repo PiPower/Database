@@ -78,6 +78,7 @@ void Tokenizer::keywordMapInit()
     m_keywordMap["insert"] = TokenType::INSERT;
     m_keywordMap["into"] = TokenType::INTO;
     m_keywordMap["values"] = TokenType::VALUES;
+    m_keywordMap["select"] = TokenType::SELECT;
 }
 
 Token Tokenizer::parseIdentifier()
