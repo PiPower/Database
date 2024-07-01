@@ -6,7 +6,8 @@ Operation VirtualMachine::operationTable[(unsigned int)OpCodes::INSTRUCTION_COUN
 {
     &VirtualMachine::executeCreateDatase,
     &VirtualMachine::executeInsertInto,
-    nullptr // exit is handled in execute function
+    nullptr, // exit is handled in execute function
+    &VirtualMachine::executeSelect
 };
 
 
@@ -109,4 +110,20 @@ void VirtualMachine::executeInsertInto(void *)
     insertIntoTable(databaseState, tableName, colNames, argOffset, m_ip, offset);
     m_ip += offset;
 
+}
+
+void VirtualMachine::executeSelect(void *)
+{
+    string tableName = m_ip;
+    m_ip += tableName.size() + 1;
+
+    vector<string> colNames;
+
+    uint16_t colCount = fetchUint16();
+    for(int i =0; i < colCount; i++)
+    {
+        colNames.emplace_back( m_ip );
+        m_ip += colNames[i].size() + 1;
+    }
+    IObuffer* buffer = selectFromTable(databaseState, move(tableName), move(colNames));
 }

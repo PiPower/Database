@@ -20,6 +20,7 @@ private:
     // ops
     void executeCreateDatase(void*);
     void executeInsertInto(void*);
+    void executeSelect(void*);
 private:
     static DatabaseState* databaseState;
     char* m_ip;

@@ -19,7 +19,13 @@ struct ColumnType
     MachineDataTypes type;
     DataTypes abstractType;
     uint16_t size;
+    uint16_t offset;
     std::string columnName;
+};
+
+struct TableFags
+{
+    bool variableSizeEntry;
 };
 
 
@@ -27,6 +33,7 @@ struct TableState
 {
     std::vector<ColumnType> columns;
     unsigned int maxEntrySize;
+    TableFags flags;
     std::vector<Page*> pages;
 
 };
@@ -41,7 +48,5 @@ struct DatabaseState
 void createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType>&& columns);
 void insertIntoTable(DatabaseState* database,const std::string& tableName,
                     const std::vector<std::string>& colNames, const std::vector<uint32_t> argOffsets, char* args, unsigned int& bytesWritten);
-uint32_t copyMachineDataType(char* scratchpad, ColumnType& columnDesc, char* sourceData, MachineDataTypes currentType);
-void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
-Page* choosePage(TableState* table,  uint32_t requiredSpace);
+IObuffer* selectFromTable(DatabaseState* database, std::string&& tableName, std::vector<std::string>&& colNames);
 #endif
