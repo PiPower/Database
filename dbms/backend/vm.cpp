@@ -1,4 +1,5 @@
 #include "vm.hpp"
+#include <sys/socket.h>
 using namespace std;
 
 DatabaseState* VirtualMachine::databaseState = nullptr;
@@ -13,14 +14,15 @@ Operation VirtualMachine::operationTable[(unsigned int)OpCodes::INSTRUCTION_COUN
 
 VirtualMachine::VirtualMachine()
 :
-m_ip(nullptr)
+m_ip(nullptr), m_clientFd(-1)
 {
     databaseState = new DatabaseState();
 }
 
-char *VirtualMachine::execute(const InstructionData *byteCode)
+char *VirtualMachine::execute(const InstructionData *byteCode, int clientFd)
 {
     m_ip = byteCode->base;
+    m_clientFd = clientFd;
     while (true)
     {
         OpCodes op = fetchInstruction();
@@ -126,4 +128,11 @@ void VirtualMachine::executeSelect(void *)
         m_ip += colNames[i].size() + 1;
     }
     IObuffer* buffer = selectFromTable(databaseState, move(tableName), move(colNames));
+    sendResponseToClient(buffer);
+    freeInstructionData(buffer);
+}
+
+void VirtualMachine::sendResponseToClient(IObuffer *data)
+{
+    int n = send(m_clientFd, data->base, data->curr - data->base, 0);
 }

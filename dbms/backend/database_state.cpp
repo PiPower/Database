@@ -10,7 +10,7 @@ uint32_t copyMachineDataType(char* scratchpad, ColumnType& columnDesc, char* sou
 void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
 Page* choosePage(TableState* table,  uint32_t requiredSpace);
 ColumnType* findColumn(TableState* table, std::string* columnName);
-void selectFromPagesFixesEntrySize(IObuffer* buffer, TableState* table, vector<string> requestedColumns);
+void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, vector<string> requestedColumns);
 
 
 void createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType> &&columns)
@@ -54,7 +54,7 @@ void insertIntoTable(DatabaseState* database,const std::string& tableName,
         {
             MachineDataTypes currentType = (MachineDataTypes)(*(uint16_t*)currentPtr);
             currentPtr+=2;
-            if(currentType != typeTable[j].type)
+            if(currentType != typeTable[j].machineType)
             {
                 // TODO handle error
             }
@@ -64,15 +64,15 @@ void insertIntoTable(DatabaseState* database,const std::string& tableName,
             
         }
         bytecodeSize = currentPtr -  args - argOffsets[i];
+        bytesWritten += bytecodeSize;
         insertIntoPage(tableIter->second, scratchPad, currScratchPad - scratchPad);
     }
-    bytesWritten = bytecodeSize + argOffsets[argOffsets.size() - 1 ];
 }
 
 //output of function is binary data in form 
 // header + body
 // header = col_count(uint16_t) | col_desc_1, ... , col_col_count 
-// col_desc_1 = machine_type(uint16_t) | col_name (null terminated string)
+// col_desc_1 = machine_type(uint16_t) | max_col_size(uint16) | col_name (null terminated string)
 // body is just sequence of bytes described by header
 IObuffer* selectFromTable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames)
 {
@@ -89,7 +89,7 @@ IObuffer* selectFromTable(DatabaseState *database, std::string &&tableName, std:
     }
     else
     {
-        selectFromPagesFixesEntrySize(buffer,  tableIter->second, colNames);
+        selectFromPagesFixedEntrySize(buffer,  tableIter->second, colNames);
     }
     return buffer;
 }
@@ -145,18 +145,37 @@ ColumnType *findColumn(TableState *table, std::string *columnName)
     return nullptr;
 }
 
-void selectFromPagesFixesEntrySize(IObuffer *buffer, TableState *table, vector<string> requestedColumns)
+void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<string> requestedColumns)
 {
     uint16_t maxEntrySize = 0;
-    vector<uint16_t> columnOffset;
     vector<ColumnType*> requestedColumnsTypes;
+    unsigned int headerSize = sizeof(uint16_t);
     for(string& name : requestedColumns)
     {
         ColumnType* column =  findColumn(table, &name);
         maxEntrySize += column->size;
         requestedColumnsTypes.push_back(column);
+        headerSize += sizeof(uint16_t) * 2;
+        headerSize += column->columnName.size() + 1;
     };
 
+    char *header = new char[headerSize];
+    *((uint16_t*) header) = (uint16_t) requestedColumnsTypes.size();
+
+    char* headerCurrent = header + sizeof(uint16_t);
+    for(int i=0; i < requestedColumnsTypes.size(); i++)
+    {
+        uint16_t columnMachineType = (uint16_t) requestedColumnsTypes[i]->machineType;
+        memcpy(headerCurrent, &columnMachineType, sizeof(uint16_t)); // type
+        headerCurrent += sizeof(uint16_t);
+        memcpy(headerCurrent, &requestedColumnsTypes[i]->size, sizeof(uint16_t)); // max size in bytes
+        headerCurrent += sizeof(uint16_t);
+        memcpy(headerCurrent, requestedColumnsTypes[i]->columnName.c_str(), requestedColumnsTypes[i]->columnName.size() + 1); // column name
+        headerCurrent += requestedColumnsTypes[i]->columnName.size() + 1;
+    }
+
+
+    emitPayload(buffer, header, headerSize);
 
     char* entryBuffer = new char[maxEntrySize];
 
@@ -170,9 +189,14 @@ void selectFromPagesFixesEntrySize(IObuffer *buffer, TableState *table, vector<s
             char* currentEntryBuffer = entryBuffer;
             for(ColumnType* column : requestedColumnsTypes)
             {
-                uint16_t copySize = column->type == MachineDataTypes::STRING ? 
+                uint16_t copySize = column->machineType == MachineDataTypes::STRING ? 
                 strlen(currentEntry + column->offset) + 1 :
                 column->size;
+
+                if(copySize > column->size)
+                {
+                    copySize = column->size;
+                }
 
                 memcpy(currentEntryBuffer,  currentEntry + column->offset, copySize);
                 currentEntryBuffer+= copySize;

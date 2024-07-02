@@ -8,6 +8,7 @@
 #include <string.h>
 #include "backend/vm.hpp"
 #include "backend/compiler.hpp"
+
 using namespace std;
 
 int main()
@@ -27,28 +28,16 @@ int main()
     errorCheck(bind( sock, (sockaddr*) &servaddr, sizeof(sockaddr_in )) );
     errorCheck( listen(sock, 10) );
 
-    char buffer[400];
+    char buffer[10000];
     while (true)
     {
         sockaddr_in clientAddr;
         socklen_t len;
-#ifdef REMOTE_CLIENT
         int client = accept(sock,  (sockaddr*)&clientAddr, &len);
         errorCheck(client);
-        recv(client, buffer, 400, 0);
-        AstNode* query = parse(buffer);
-        InstructionData* byteCode = compile(query);
-        executor.execute(byteCode) ;
-#else
-        //const char* bufferTemp = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(34) );";
-        const char* bufferTemp = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(7) );"
-                                 "INSERT Into Workers VALUES(\'Jan\', \'Kowalski\', 31, 1232445, \'Janina\' ), "
-                                 "(\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'ASDFGHJ\' ), (\'TOmasz\', \'Walczewki\', 43, 6894, \'HAHAHAH\' );"
-                                 "SeLect name, age, id, partner_name from Workers ; ";
-        memcpy(buffer, bufferTemp, strlen( bufferTemp) + 1);
-#endif
+        recv(client, buffer, 10000, 0);
         vector<AstNode*> queries = parse(buffer);
         InstructionData* byteCode = compile(queries);
-        executor.execute(byteCode) ;
+        executor.execute(byteCode, client) ;
     }  
 }

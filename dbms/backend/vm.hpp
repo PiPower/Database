@@ -11,7 +11,7 @@ class VirtualMachine
 {
 public:
     VirtualMachine();
-    char* execute(const InstructionData* byteCode);
+    char* execute(const InstructionData* byteCode, int clientFd);
     OpCodes fetchInstruction();
     uint16_t fetchUint16();
     uint16_t fetchUint32();
@@ -21,9 +21,11 @@ private:
     void executeCreateDatase(void*);
     void executeInsertInto(void*);
     void executeSelect(void*);
+    void sendResponseToClient(IObuffer* data);
 private:
     static DatabaseState* databaseState;
     char* m_ip;
+    int m_clientFd;
     static Operation operationTable[(unsigned int)OpCodes::INSTRUCTION_COUNT];
 };
 

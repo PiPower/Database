@@ -16,7 +16,7 @@ struct Page
 
 struct ColumnType
 {
-    MachineDataTypes type;
+    MachineDataTypes machineType;
     DataTypes abstractType;
     uint16_t size;
     uint16_t offset;
