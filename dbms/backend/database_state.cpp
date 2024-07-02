@@ -108,6 +108,7 @@ uint32_t copyMachineDataType(char *scratchpad, ColumnType& columnDesc, char *sou
             copySize = strlen(sourceData);
             uint32_t include_null = 0;
             if( copySize < columnDesc.size ) {include_null = 1;} 
+            if( copySize > columnDesc.size) {copySize = columnDesc.size;}
             memcpy(scratchpad, sourceData, copySize + include_null);
             copySize += 1;
         }break;
