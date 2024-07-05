@@ -33,7 +33,7 @@ struct ParsingState
     bool invalidQuery;
     std::vector<AstNode*> allNodes;
     jmp_buf buff;
-    const char* errorMessage;
+    char* errorMessage;
 };
 
 

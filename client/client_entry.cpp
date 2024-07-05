@@ -69,16 +69,25 @@ void displayResponse(char* buffer, unsigned int bufferSize)
         printf("\n");
     }
 
+
     fflush(stdout);
+    if(bufferSize > bufferCurrent - buffer)
+    {
+        displayResponse(bufferCurrent, bufferSize - ( bufferCurrent - buffer ));
+    }
 }
 
 int main()
 {
+    /*
     string msg = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(7) );"
                  "INSERT Into Workers VALUES(\'Jan\', \'Kowalski\', 31, 1232445, \'Janina\' ), "
                  "(\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'ASDFGHJ\' ), (\'TOmasz\', \'Walczewki\', 43, 6894, \'HAHAHAH\' );"
                  "SeLect name, age, id, partner_name from Workers ; ";
+                 */
 
+    string msg = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(7) );"
+                 "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(7) );";
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     errorCheck(sock);
 
@@ -89,7 +98,14 @@ int main()
     errorCheck( connect(sock, (sockaddr*)&server, sizeof( sockaddr_in)));
     send(sock, msg.c_str(), msg.size(), 0);
     char buffer[10000];
-    int n = recv(sock, buffer, 10000, 0);
+    while (true)
+    {
+        int n = recv(sock, buffer, 10000, MSG_DONTWAIT );
+        if( n > 0)
+        {
+            displayResponse(buffer, n);
+        }
+    }
+    
 
-    displayResponse(buffer, n);
 }

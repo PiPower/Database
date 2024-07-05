@@ -11,10 +11,20 @@ void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
 Page* choosePage(TableState* table,  uint32_t requiredSpace);
 ColumnType* findColumn(TableState* table, std::string* columnName);
 void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, vector<string> requestedColumns);
+void updateStringOutputBuffer( IObuffer* buffer, bool error, const char* errMsg);
 
-
-void createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType> &&columns)
+IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType> &&columns)
 {
+    IObuffer* buffer = createInstructionData();
+    auto tableIter = database->tables.find( tableName);
+    if(tableIter !=  database->tables.end())
+    {
+        static const char* const errMsg = "Table with specified name already exists";
+        updateStringOutputBuffer(buffer, true, errMsg);
+        return buffer;
+    }
+
+
     TableState* table = new TableState();
     table->columns = move(columns);
     table->maxEntrySize = 0;
@@ -29,11 +39,18 @@ void createTable(DatabaseState* database, std::string&& tableName, std::vector<C
     page->pageCurrent = page->dataBase;
     table->pages.push_back( page );
     database->tables[move(tableName)] = table;
+
+
+    static const char* const successMSG = "Table has been created succesfully";
+    updateStringOutputBuffer(buffer, false, successMSG);
+    return buffer;
 }
 
-void insertIntoTable(DatabaseState* database,const std::string& tableName,
+IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
                     const std::vector<std::string>& colNames, const std::vector<uint32_t> argOffsets, char* args, unsigned int& bytesWritten)
 {
+    IObuffer* buffer = createInstructionData();
+
     auto tableIter = database->tables.find( tableName);
     if(tableIter ==  database->tables.end())
     {
@@ -67,6 +84,8 @@ void insertIntoTable(DatabaseState* database,const std::string& tableName,
         bytesWritten += bytecodeSize;
         insertIntoPage(tableIter->second, scratchPad, currScratchPad - scratchPad);
     }
+
+    return buffer;
 }
 
 //output of function is binary data in form 
@@ -207,4 +226,29 @@ void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<s
         }
     }
 
+}
+
+// creating buffer for error message
+void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg)
+{
+    static const char* const colNameError = "Error";
+    static const char* const  colNameMessage = "Message";
+    const char* outputType;
+    if(error)
+    {
+        outputType = colNameError;
+    }
+    else
+    {
+        outputType = colNameMessage;
+    }
+    uint16_t msgSize = strlen(msg) + 1;
+    uint16_t colCount = 1;
+    uint16_t machineType = (uint16_t)MachineDataTypes::STRING;
+
+    emitPayload(buffer, &colCount, 2);
+    emitPayload(buffer, &machineType, 2);
+    emitPayload(buffer, &msgSize, 2);
+    emitPayload(buffer, outputType, strlen(outputType) + 1);
+    emitPayload(buffer, msg, strlen(msg) + 1);
 }

@@ -1,6 +1,23 @@
 #include "parser.hpp"
-
+#include <string.h>
+#define ERROR_BUFFER_SIZE 500
 using namespace std;
+
+const char* errTable[]=
+{
+    "NONE", "ERROR", "IDENTIFIER", "END_OF_FILE",
+    // keywords
+    "CREATE", "TABLE", "FROM", "INT", "CHAR", "INSERT",
+    "INTO", "VALUES", "SELECT",
+    // separators
+    "L_BRACKET",  "R_BRACKET", "L_PARENTHESES",  "R_PARENTHESES", 
+    "L_BRACE", "R_BRACE",
+    // miscallenous
+    "COLON", "COMMA" , "SEMICOLON", "DOT",
+    //types
+    "CONSTANT", "STRING"
+};
+
 
 
 void consumeToken(ParsingState &state, TokenType type)
@@ -8,14 +25,15 @@ void consumeToken(ParsingState &state, TokenType type)
     Token token =  state.tokenizer.scan();
     if(token.type != type)
     {
-        dprintf(2, "unexpected token in query\n");
-        triggerParserError(state, 0, "unexpected token in query\n");
+        snprintf(state.errorMessage, ERROR_BUFFER_SIZE,"Expected token is %s but given is %s", errTable[(uint16_t)type], errTable[ (uint16_t)token.type]);
+        triggerParserError(state, 0, state.errorMessage);
     }
 }
 
 std::vector<AstNode*> parse(const char *text)
 {
     ParsingState state{text, 0 , Tokenizer{text}, false };
+    state.errorMessage = new char[ERROR_BUFFER_SIZE];
     vector<AstNode*> statements;
     setjmp(state.buff);
     if(state.invalidQuery)
@@ -156,8 +174,7 @@ AstNode *parsePrimary(ParsingState &state)
         node->data = token.data;
         break;
     default:
-        dprintf(2, "Unsupported primary\n");
-        exit(-1);
+        triggerParserError(state, 0, "expecter primary or constant");
         break;
     }
     return node;
@@ -277,6 +294,11 @@ void freeNode(AstNode *node)
 void triggerParserError(ParsingState &state, int value, const char* errorMessage)
 {
     state.invalidQuery = true;
-    state.errorMessage = errorMessage;
+    int errLen = strlen(errorMessage  + 1);
+    if( errLen > ERROR_BUFFER_SIZE)
+    {
+        errLen = ERROR_BUFFER_SIZE;
+    }
+    memcpy( state.errorMessage,  errorMessage, errLen);
     longjmp(state.buff, value);
 }

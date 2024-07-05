@@ -45,8 +45,8 @@ struct DatabaseState
 
 
 
-void createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType>&& columns);
-void insertIntoTable(DatabaseState* database,const std::string& tableName,
+IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType>&& columns);
+IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
                     const std::vector<std::string>& colNames, const std::vector<uint32_t> argOffsets, char* args, unsigned int& bytesWritten);
 IObuffer* selectFromTable(DatabaseState* database, std::string&& tableName, std::vector<std::string>&& colNames);
 #endif

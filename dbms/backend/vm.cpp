@@ -91,7 +91,9 @@ void VirtualMachine::executeCreateDatase(void*)
         columnTypes.push_back(type);
     }
 
-    createTable(databaseState, move(tableName), move(columnTypes) );
+    IObuffer* buffer = createTable(databaseState, move(tableName), move(columnTypes) );
+    sendResponseToClient(buffer);
+    freeInstructionData(buffer);
 }
 
 void VirtualMachine::executeInsertInto(void *)
