@@ -9,9 +9,11 @@
 using namespace std;
 
 
-void displayResponse(char* buffer, unsigned int bufferSize)
+int displayResponse(char* buffer, unsigned int bufferSize)
 {
     char* bufferCurrent = buffer;
+    uint32_t itemCount = *(uint32_t*) bufferCurrent;
+    bufferCurrent += sizeof(uint32_t);
     uint16_t colCount =  *(uint16_t*) bufferCurrent;
     bufferCurrent+= sizeof(uint16_t);
     vector<MachineDataTypes> types;
@@ -33,7 +35,8 @@ void displayResponse(char* buffer, unsigned int bufferSize)
         bufferCurrent += strlen(bufferCurrent) + 1;
     }
     printf("\n");
-    while (bufferCurrent - buffer < bufferSize)
+    int i =0;
+    while (bufferCurrent - buffer < bufferSize && i < itemCount )
     {
         for(int i = 0; i < colCount; i++)
         {
@@ -67,27 +70,26 @@ void displayResponse(char* buffer, unsigned int bufferSize)
 
         }
         printf("\n");
+        i++;
     }
 
 
     fflush(stdout);
-    if(bufferSize > bufferCurrent - buffer)
-    {
-        displayResponse(bufferCurrent, bufferSize - ( bufferCurrent - buffer ));
-    }
+    return  bufferCurrent - buffer;
 }
 
 int main()
 {
-    /*
+    
     string msg = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(7) );"
                  "INSERT Into Workers VALUES(\'Jan\', \'Kowalski\', 31, 1232445, \'Janina\' ), "
                  "(\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'ASDFGHJ\' ), (\'TOmasz\', \'Walczewki\', 43, 6894, \'HAHAHAH\' );"
                  "SeLect name, age, id, partner_name from Workers ; ";
-                 */
-
+                 
+   /*
     string msg = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(7) );"
                  "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(7) );";
+      */
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     errorCheck(sock);
 
@@ -103,7 +105,16 @@ int main()
         int n = recv(sock, buffer, 10000, MSG_DONTWAIT );
         if( n > 0)
         {
-            displayResponse(buffer, n);
+            int readBytes = 0;
+            while (true)
+            {
+                readBytes += displayResponse(buffer + readBytes, n);
+                if(readBytes >= n)
+                {
+                    break;
+                }
+            }
+            
         }
     }
     

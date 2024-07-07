@@ -27,6 +27,7 @@ private:
     char* m_ip;
     int m_clientFd;
     static Operation operationTable[(unsigned int)OpCodes::INSTRUCTION_COUNT];
+    char* m_privateMemory;
 };
 
 

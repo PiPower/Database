@@ -47,50 +47,62 @@ IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vec
 }
 
 IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
-                    const std::vector<std::string>& colNames, const std::vector<uint32_t> argOffsets, char* args, unsigned int& bytesWritten)
+                    const std::vector<std::string>& colNames, const std::vector<uint32_t> argOffsets,
+                     char* args, unsigned int& bytesWritten, char* msgBuffer, unsigned int bufferSize)
 {
     IObuffer* buffer = createInstructionData();
 
     auto tableIter = database->tables.find( tableName);
     if(tableIter ==  database->tables.end())
     {
-        dprintf(2, "table not found");
-        exit(-1);
+        static const char* const errMsg = "Table with specified name does not exist";
+        updateStringOutputBuffer(buffer, true, errMsg);
+        return buffer;
     }
 
     vector<ColumnType>& typeTable = tableIter->second->columns;
-
     char* scratchPad = new char[tableIter->second->maxEntrySize];
     char* currScratchPad;
     unsigned int bytecodeSize;
-    for(size_t i=0; i < argOffsets.size(); i++)
+    unsigned int corretValues = 0;
+    unsigned int numberOfArgs = static_cast<unsigned int>( argOffsets.size() );
+
+    for(size_t i=0; i <numberOfArgs; i++)
     {
         char* currentPtr = args + argOffsets[i];
         currScratchPad = scratchPad;
+        bool typeErrorFlag = false;
         for(size_t j = 0; j < typeTable.size(); j++)
         {
             MachineDataTypes currentType = (MachineDataTypes)(*(uint16_t*)currentPtr);
             currentPtr+=2;
             if(currentType != typeTable[j].machineType)
             {
-                // TODO handle error
+                typeErrorFlag = true;
             }
             uint32_t offset = copyMachineDataType(currScratchPad, typeTable[j], currentPtr, currentType);
             currentPtr += offset;
             currScratchPad +=  typeTable[j].abstractType == DataTypes::CHAR ?  typeTable[j].size : offset;
             
         }
+
         bytecodeSize = currentPtr -  args - argOffsets[i];
         bytesWritten += bytecodeSize;
-        insertIntoPage(tableIter->second, scratchPad, currScratchPad - scratchPad);
+        if(!typeErrorFlag)
+        {
+            insertIntoPage(tableIter->second, scratchPad, currScratchPad - scratchPad);
+            corretValues++;
+        }
     }
 
+    snprintf(msgBuffer, bufferSize, "Successfully writtent %u out of %u items", corretValues, numberOfArgs);
+    updateStringOutputBuffer(buffer, false, msgBuffer);
     return buffer;
 }
 
 //output of function is binary data in form 
 // header + body
-// header = col_count(uint16_t) | col_desc_1, ... , col_col_count 
+// header =  item_count(uint32_t)  |col_count(uint16_t) | col_desc_1, ... , col_col_count 
 // col_desc_1 = machine_type(uint16_t) | max_col_size(uint16) | col_name (null terminated string)
 // body is just sequence of bytes described by header
 IObuffer* selectFromTable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames)
@@ -169,7 +181,7 @@ void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<s
 {
     uint16_t maxEntrySize = 0;
     vector<ColumnType*> requestedColumnsTypes;
-    unsigned int headerSize = sizeof(uint16_t);
+    unsigned int headerSize = sizeof(uint32_t) + sizeof(uint16_t);
     for(string& name : requestedColumns)
     {
         ColumnType* column =  findColumn(table, &name);
@@ -180,6 +192,7 @@ void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<s
     };
 
     char *header = new char[headerSize];
+    header += sizeof(uint32_t);
     *((uint16_t*) header) = (uint16_t) requestedColumnsTypes.size();
 
     char* headerCurrent = header + sizeof(uint16_t);
@@ -194,11 +207,10 @@ void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<s
         headerCurrent += requestedColumnsTypes[i]->columnName.size() + 1;
     }
 
-
-    emitPayload(buffer, header, headerSize);
+    char* skippedPos = skipBytes(buffer, headerSize);
 
     char* entryBuffer = new char[maxEntrySize];
-
+    uint32_t selectedValues = 0;
     for(int i=0; i < table->pages.size(); i++ )
     {
         Page* currentPage = table->pages[i];
@@ -221,11 +233,13 @@ void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<s
                 memcpy(currentEntryBuffer,  currentEntry + column->offset, copySize);
                 currentEntryBuffer+= copySize;
             }
-
+            selectedValues++;
             emitPayload(buffer, entryBuffer, currentEntryBuffer - entryBuffer );
         }
     }
-
+    header -= sizeof(uint32_t);
+    *(uint32_t*)header = selectedValues;
+    fillSkippedBytes(buffer, skippedPos, header, headerSize);
 }
 
 // creating buffer for error message
@@ -242,10 +256,12 @@ void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg)
     {
         outputType = colNameMessage;
     }
+    uint32_t itemCount = 1;
     uint16_t msgSize = strlen(msg) + 1;
     uint16_t colCount = 1;
     uint16_t machineType = (uint16_t)MachineDataTypes::STRING;
 
+    emitPayload(buffer, &itemCount, 4);
     emitPayload(buffer, &colCount, 2);
     emitPayload(buffer, &machineType, 2);
     emitPayload(buffer, &msgSize, 2);

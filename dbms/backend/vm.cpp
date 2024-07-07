@@ -1,5 +1,6 @@
 #include "vm.hpp"
 #include <sys/socket.h>
+#define LOCAL_BUFFER_SIZE 10000
 using namespace std;
 
 DatabaseState* VirtualMachine::databaseState = nullptr;
@@ -14,7 +15,7 @@ Operation VirtualMachine::operationTable[(unsigned int)OpCodes::INSTRUCTION_COUN
 
 VirtualMachine::VirtualMachine()
 :
-m_ip(nullptr), m_clientFd(-1)
+m_ip(nullptr), m_clientFd(-1), m_privateMemory(new char[LOCAL_BUFFER_SIZE])
 {
     databaseState = new DatabaseState();
 }
@@ -111,9 +112,10 @@ void VirtualMachine::executeInsertInto(void *)
         argOffset.push_back(fetchUint32());
     }
     unsigned int offset = 0;
-    insertIntoTable(databaseState, tableName, colNames, argOffset, m_ip, offset);
+    IObuffer* buffer = insertIntoTable(databaseState, tableName, colNames, argOffset, m_ip, offset, m_privateMemory, LOCAL_BUFFER_SIZE);
     m_ip += offset;
-
+    sendResponseToClient(buffer);
+    freeInstructionData(buffer);
 }
 
 void VirtualMachine::executeSelect(void *)
