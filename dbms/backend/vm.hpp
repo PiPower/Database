@@ -1,7 +1,7 @@
 #ifndef VIRTUAL_MACHINE
 #define VIRUTAL_MACHINE
 #include "database_state.hpp"
-#include "compiler.hpp"
+#include "../parser/compiler.hpp"
 
 class VirtualMachine;
 typedef void (VirtualMachine::*Operation)(void*);

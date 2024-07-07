@@ -1,7 +1,7 @@
 #ifndef DB_STATE
 #define DB_STATE
 
-#include "compiler.hpp"
+#include "../parser/compiler.hpp"
 #include <unordered_map>
 #include <string>
 #include <vector>

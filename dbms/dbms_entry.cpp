@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string.h>
 #include "backend/vm.hpp"
-#include "backend/compiler.hpp"
+#include "parser/compiler.hpp"
 
 using namespace std;
 

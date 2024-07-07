@@ -2,8 +2,8 @@
 #define COMPILER
 
 #include "../parser/parser.hpp"
-#include "types.hpp"
-#include "data_buffer.hpp"
+#include "../backend/types.hpp"
+#include "../backend/data_buffer.hpp"
 
 struct CompilationState
 {
