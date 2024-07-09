@@ -161,7 +161,18 @@ void insertIntoPage(TableState *table, char *data, uint32_t dataSize)
 
 Page *choosePage(TableState *table, uint32_t requiredSpace)
 {
-    return table->pages[0];
+    int currentPage = table->pages.size() - 1;
+    uint16_t remainingSpace =  PAGE_SIZE - (table->pages[currentPage]->pageCurrent - table->pages[currentPage]->dataBase);
+    if( remainingSpace >= requiredSpace)
+    {
+        return table->pages[currentPage];
+    }
+
+    Page* page= new Page();
+    page->dataBase = new char[PAGE_SIZE];
+    page->pageCurrent = page->dataBase;
+    table->pages.push_back( page );
+    return table->pages[currentPage + 1];
 }
 
 ColumnType *findColumn(TableState *table, std::string *columnName)
