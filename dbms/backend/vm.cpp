@@ -131,7 +131,8 @@ void VirtualMachine::executeSelect(void *)
         colNames.emplace_back( m_ip );
         m_ip += colNames[i].size() + 1;
     }
-    IObuffer* buffer = selectFromTable(databaseState, move(tableName), move(colNames));
+    TableState* subtable = createSubtable(databaseState, move(tableName), move(colNames));
+    IObuffer* buffer = serialazeTable(subtable);
     sendResponseToClient(buffer);
     freeInstructionData(buffer);
 }

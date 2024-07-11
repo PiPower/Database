@@ -24,9 +24,17 @@ IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vec
         return buffer;
     }
 
+    database->tables[move(tableName)] = createTable( columns );
 
+    static const char* const successMSG = "Table has been created succesfully";
+    updateStringOutputBuffer(buffer, false, successMSG);
+    return buffer;
+}
+
+TableState *createTable(std::vector<ColumnType>& columns)
+{
     TableState* table = new TableState();
-    table->columns = move(columns);
+    table->columns = columns;
     table->maxEntrySize = 0;
     table->flags.variableSizeEntry = false;
     for(auto& col :  table->columns)
@@ -34,16 +42,12 @@ IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vec
         col.offset = table->maxEntrySize;
         table->maxEntrySize += col.size;
     }
+
     Page* page= new Page();
     page->dataBase = new char[PAGE_SIZE];
     page->pageCurrent = page->dataBase;
     table->pages.push_back( page );
-    database->tables[move(tableName)] = table;
-
-
-    static const char* const successMSG = "Table has been created succesfully";
-    updateStringOutputBuffer(buffer, false, successMSG);
-    return buffer;
+    return table;
 }
 
 IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
@@ -122,6 +126,113 @@ IObuffer* selectFromTable(DatabaseState *database, std::string &&tableName, std:
     {
         selectFromPagesFixedEntrySize(buffer,  tableIter->second, colNames);
     }
+    return buffer;
+}
+
+TableState *createSubtable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames)
+{
+    auto tableIter = database->tables.find( tableName);
+    if(tableIter ==  database->tables.end())
+    {
+        return nullptr;
+    }
+    TableState* table =  tableIter->second;
+
+    uint16_t maxEntrySize = table->maxEntrySize;
+    vector<ColumnType> requestedColumnsTypes;
+    for(string& name : colNames)
+    {
+        ColumnType column =  *findColumn(table, &name);
+        requestedColumnsTypes.push_back(column);
+    };
+
+    TableState* subtable = createTable( requestedColumnsTypes );
+    char* buffer = new char[maxEntrySize];
+
+    for(int i=0; i < table->pages.size(); i++ )
+    {
+        Page* currentPage = table->pages[i];
+        for(int j = 0; j < currentPage->offsets.size(); j++)
+        {
+            uint16_t currentOffset = currentPage->offsets[j];
+            char* currentEntry = currentPage->dataBase + currentOffset;
+            char* currentBuffer = buffer;
+
+
+            for(ColumnType& column : requestedColumnsTypes)
+            {
+                uint16_t copySize = column.size;
+                memcpy(currentBuffer,  currentEntry + column.offset, copySize);
+                currentBuffer+= copySize;
+            }
+            insertIntoPage(subtable, buffer, currentBuffer - buffer);
+        }
+    }
+
+    delete[] buffer;
+    return subtable;
+}
+
+IObuffer *serialazeTable(TableState *table)
+{
+    IObuffer* buffer = createInstructionData();
+
+    uint16_t maxEntrySize = table->maxEntrySize;
+    unsigned int headerSize = sizeof(uint32_t) + sizeof(uint16_t);
+    for(ColumnType& column : table->columns)
+    {
+        headerSize += sizeof(uint16_t) * 2;
+        headerSize += column.columnName.size() + 1;
+    };
+
+    char *header = new char[headerSize];
+    header += sizeof(uint32_t);
+    *((uint16_t*) header) = (uint16_t) table->columns.size();
+
+    char* headerCurrent = header + sizeof(uint16_t);
+    for(int i=0; i < table->columns.size(); i++)
+    {
+        uint16_t columnMachineType = (uint16_t) table->columns[i].machineType;
+        memcpy(headerCurrent, &columnMachineType, sizeof(uint16_t)); // type
+        headerCurrent += sizeof(uint16_t);
+        memcpy(headerCurrent, &table->columns[i].size, sizeof(uint16_t)); // max size in bytes
+        headerCurrent += sizeof(uint16_t);
+        memcpy(headerCurrent, table->columns[i].columnName.c_str(),table->columns[i].columnName.size() + 1); // column name
+        headerCurrent += table->columns[i].columnName.size() + 1;
+    }
+
+    char* skippedPos = skipBytes(buffer, headerSize);
+    char* entryBuffer = new char[maxEntrySize];
+    uint32_t selectedValues = 0;
+    for(int i=0; i < table->pages.size(); i++ )
+    {
+        Page* currentPage = table->pages[i];
+        for(int j = 0; j < currentPage->offsets.size(); j++)
+        {
+            uint16_t currentOffset = currentPage->offsets[j];
+            char* currentEntry = currentPage->dataBase + currentOffset;
+            char* currentEntryBuffer = entryBuffer;
+            for(ColumnType& column : table->columns)
+            {
+                uint16_t copySize = column.machineType == MachineDataTypes::STRING ? 
+                strlen(currentEntry + column.offset) + 1 :
+                column.size;
+
+                if(copySize > column.size)
+                {
+                    copySize = column.size;
+                }
+
+                emitPayload(buffer, currentEntry + column.offset, copySize);
+                currentEntryBuffer+= copySize;
+            }
+            selectedValues++;
+        }
+    }
+    header -= sizeof(uint32_t);
+    *(uint32_t*)header = selectedValues;
+    fillSkippedBytes(buffer, skippedPos, header, headerSize);
+
     return buffer;
 }
 

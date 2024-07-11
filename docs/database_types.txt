@@ -1,2 +1,3 @@
 INT -> integer type, stores as  int32
 CHAR(n) -> string of size n, stored as null terminated if k < n else non null terminated 
+VARCHAR(n) -> currently not supported
