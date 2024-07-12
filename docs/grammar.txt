@@ -8,6 +8,7 @@
 // "symbol" is to be treated as token
 // ' ' '\t' ||   '\r' || '\n' are whitespace to be skipped unless explicitly stated
 // character sequence in "***" is to be treated as literal for example "xyz" represnt xyz symbol in source code
+// anything inside [ ... ] is optional
 //------------------------------------------------------------
 //-----------------------GRAMMAR------------------------------
 //------------------------------------------------------------
@@ -16,21 +17,21 @@ whitespace:
  " " | \t | \r | \n
 
 digit:
-    0 | 1 | ... | 9
+    "0"| "1" | ... |" 9"
 
 punctuator:
-    ; | , | . 
+    ";" | "," | "." 
 
 non_zero_digit:
-     1 | ... | 9
+     "1" | ... | "9"
 alpha: 
-    a | b | ... | z | A | B | ... | Z 
+    "a" | "b" | ... | "z" | "A" | "B" | ... | "Z" 
 
 number:
-    0 | (non_zero_digit  digit*)
+    "0" | (non_zero_digit  digit*)
 
 non-digit:
-    alpha | _
+    alpha | "_"
 
 string:
     "'" (whitespace | non-digit | digit | punctuator)* "'"
@@ -62,8 +63,14 @@ insert_statement:
 select_args:
     identifier 
 
+op:
+    "<" | "<=" | ">" | ">=" | "="
+
+primary:
+    string | number | identifier
+
 select_statement:
-    "SELECT" select_args ("," select_args)* "FROM" identifier
+    "SELECT" select_args ("," select_args)* "FROM" identifier ["WHERE" primary op primary]
     
 statement:
     (create_table_statement | insert_statement | select_statement) ";"

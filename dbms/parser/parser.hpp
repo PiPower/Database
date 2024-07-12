@@ -13,7 +13,10 @@ enum class AstNodeType
     INSERT, INSERT_ARGS, SELECT,
     SELECT_ARGS,
     // types
-    INT_32, CHAR, STRING
+    INT_32, CHAR, STRING,
+    //math ops
+    GREATER_EQUAL, GREATER, LESS_EQUAL, LESS, 
+    EQUAL
 };
 
 
@@ -55,5 +58,8 @@ AstNode* parseDataType(ParsingState& state);
 AstNode* parseIdentifier(ParsingState& state);
 AstNode* parseNumber(ParsingState& state);
 AstNode* parseArgument(ParsingState& state);
+// epxressions
+AstNode* parseExpression(ParsingState& state);
+AstNode* parseOp(ParsingState& state);
 
 #endif

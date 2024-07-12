@@ -156,6 +156,17 @@ AstNode *parseSelectStatement(ParsingState &state)
 
     AstNode* tableName = parseIdentifier(state);
     root->child.push_back(tableName);
+
+    token = state.tokenizer.scan();
+    if(token.type == TokenType::WHERE)
+    {
+        AstNode* expression = parseExpression(state);
+        root->child.push_back(expression);
+    }
+    else
+    {
+        state.tokenizer.putback(token);
+    }
     return root;
 }
 
@@ -171,6 +182,10 @@ AstNode *parsePrimary(ParsingState &state)
         break;
     case TokenType::CONSTANT :
         node->type = AstNodeType::CONSTANT;
+        node->data = token.data;
+        break;
+    case TokenType::STRING :
+        node->type = AstNodeType::STRING;
         node->data = token.data;
         break;
     default:
@@ -267,6 +282,44 @@ AstNode *parseArgument(ParsingState &state)
     }
 
     return argument;
+}
+
+AstNode *parseExpression(ParsingState &state)
+{
+    AstNode* leftTerm = parsePrimary(state);
+    AstNode* op = parseOp(state);
+    AstNode* rightTerm = parsePrimary(state);
+    op->child.push_back(leftTerm);
+    op->child.push_back(rightTerm);
+    return op;
+}
+
+AstNode *parseOp(ParsingState &state)
+{
+    Token t = state.tokenizer.scan();
+    AstNode* op = allocateNode(state);
+    switch (t.type)
+    {
+    case TokenType::GREATER :
+        op->type = AstNodeType::GREATER;
+        break;
+    case TokenType::GREATER_EQUAL :
+        op->type = AstNodeType::GREATER_EQUAL;
+        break;
+    case TokenType::LESS :
+        op->type = AstNodeType::LESS;
+        break;
+    case TokenType::LESS_EQUAL :
+        op->type = AstNodeType::LESS_EQUAL;
+        break;
+    case TokenType::EQUAL :
+        op->type = AstNodeType::EQUAL;
+        break;
+    default:
+        triggerParserError(state, 0, "unsupported operator");
+        break;
+    }
+    return op;
 }
 
 AstNode *allocateNode(ParsingState& state)

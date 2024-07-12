@@ -9,14 +9,17 @@ enum class TokenType
     NONE, ERROR, IDENTIFIER, END_OF_FILE,
     // keywords
     CREATE, TABLE, FROM, INT, CHAR, INSERT,
-    INTO, VALUES, SELECT,
+    INTO, VALUES, SELECT, WHERE,
     // separators
     L_BRACKET,  R_BRACKET, L_PARENTHESES,  R_PARENTHESES, 
     L_BRACE, R_BRACE,
     // miscallenous
      COLON, COMMA , SEMICOLON, DOT,
     //types
-    CONSTANT, STRING
+    CONSTANT, STRING,
+    // math ops
+    GREATER_EQUAL, GREATER, LESS_EQUAL, LESS, 
+    EQUAL
 };
 
 
