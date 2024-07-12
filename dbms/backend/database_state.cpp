@@ -152,9 +152,15 @@ TableState *createSubtable(DatabaseState *database, std::string &&tableName, std
     for(int i=0; i < table->pages.size(); i++ )
     {
         Page* currentPage = table->pages[i];
-        for(int j = 0; j < currentPage->offsets.size(); j++)
+        for(int j = 0; j < currentPage->entries.size(); j++)
         {
-            uint16_t currentOffset = currentPage->offsets[j];
+            //skip dead entries
+            if( IS_DEAD( currentPage->entries[j] ) )
+            {
+                continue;
+            }
+
+            uint16_t currentOffset = GET_OFFSET(currentPage->entries[j] );
             char* currentEntry = currentPage->dataBase + currentOffset;
             char* currentBuffer = buffer;
 
@@ -207,9 +213,15 @@ IObuffer *serialazeTable(TableState *table)
     for(int i=0; i < table->pages.size(); i++ )
     {
         Page* currentPage = table->pages[i];
-        for(int j = 0; j < currentPage->offsets.size(); j++)
+        for(int j = 0; j < currentPage->entries.size(); j++)
         {
-            uint16_t currentOffset = currentPage->offsets[j];
+            //skip dead entries
+            if( IS_DEAD( currentPage->entries[j] ) > 0 )
+            {
+                continue;
+            }
+
+            uint16_t currentOffset = GET_OFFSET(currentPage->entries[j] );
             char* currentEntry = currentPage->dataBase + currentOffset;
             char* currentEntryBuffer = entryBuffer;
             for(ColumnType& column : table->columns)
@@ -263,8 +275,11 @@ uint32_t copyMachineDataType(char *scratchpad, ColumnType& columnDesc, char *sou
 void insertIntoPage(TableState *table, char *data, uint32_t dataSize)
 {
     Page* chosenPage = choosePage(table, dataSize);
-    uint32_t offset = chosenPage->pageCurrent - chosenPage->dataBase;
-    chosenPage->offsets.push_back(offset );
+    uint16_t offset = chosenPage->pageCurrent - chosenPage->dataBase ;
+    EntryDescriptor entryDesc;
+    SET_ALIVE(entryDesc);
+    SET_OFFSET(entryDesc, offset);
+    chosenPage->entries.push_back(entryDesc);
     memcpy(chosenPage->pageCurrent, data, dataSize);
     chosenPage->pageCurrent += dataSize;
 
@@ -336,9 +351,9 @@ void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<s
     for(int i=0; i < table->pages.size(); i++ )
     {
         Page* currentPage = table->pages[i];
-        for(int j = 0; j < currentPage->offsets.size(); j++)
+        for(int j = 0; j < currentPage->entries.size(); j++)
         {
-            uint16_t currentOffset = currentPage->offsets[j];
+            uint16_t currentOffset = GET_OFFSET(currentPage->entries[j]);
             char* currentEntry = currentPage->dataBase + currentOffset;
             char* currentEntryBuffer = entryBuffer;
             for(ColumnType* column : requestedColumnsTypes)
