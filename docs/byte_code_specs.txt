@@ -1,7 +1,11 @@
 // file contains specification of byte code used by data base
 // virtual machine
 // each instruction is specified in formar:
-// Name; Description, byte structure
+//---------------------
+//| Name;             |
+//| Description;      |
+//| Byte structure    |
+//---------------------
 // during compilation if types are unspecified they should be 
 // assigned type that takes as little space as possible
 // for example constants that are <= 32767 should be assigned
@@ -25,14 +29,16 @@ abstract_types:
 //------------------------------------------------------------
 //-------------------BYTE CODE ISA----------------------------
 //------------------------------------------------------------
-
-CREATE_TABLE; creates table; table name(null terminated string) | arg_count ( uint16 ) | type_1, ..., type_k 
+CREATE_TABLE;
+creates table;
+table name(null terminated string) | arg_count ( uint16 ) | type_1, ..., type_k 
 where 
 type_j = one of abstract_types | type name(null terminated string)
 
 //------------------------------------------------------------
-
-INSERT; insert into specifier name; table name(null terminated string) | insert_header | arg_1, ..., arg_k 
+INSERT;
+insert into specifier name; 
+table name(null terminated string) | insert_header | arg_1, ..., arg_k;
 where
 arg_j = ( machine_type_id(uint16)  | machine_type )_1 | ... | ( machine_type_id(uint16)  | machine_type )_column_count
 
@@ -43,5 +49,6 @@ insert_header:
 // offsets are calculated from first byte after arg_count
 
 //------------------------------------------------------------
-
-SELECT; select specified columns from database; table name(null terminated string) | column_count(uint16) | column_name_1(null terminated string), ... , column_name_column_count(null terminated string)
+SELECT;
+select specified columns from database;
+table name(null terminated string) | column_count(uint16) | column_name_1(null terminated string), ... , column_name_column_count(null terminated string)
