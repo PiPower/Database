@@ -8,6 +8,7 @@ enum class OpCodes
     INSERT,
     EXIT,
     SELECT,
+    ERROR,
     INSTRUCTION_COUNT
 };
 

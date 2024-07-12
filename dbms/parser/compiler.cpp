@@ -48,9 +48,18 @@ void compileStatement(CompilationState &state, AstNode *query)
     case AstNodeType::SELECT:
         compileSelect(state, query);
         return;
+    case AstNodeType::ERROR:
+        compileError(state, query);
+        return;
     default:
         break;
     };
+}
+
+void compileError(CompilationState &state, AstNode *query)
+{
+    string* errorMsg = (string*)query->data;
+    emitInstructionWithPayload(OpCodes::ERROR, state.instructionData, errorMsg->c_str(), errorMsg->size() + 1 );
 }
 
 void serializeDataType(AstNode *type, InstructionData* byteCode)

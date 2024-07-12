@@ -14,7 +14,7 @@ enum class TokenType
     L_BRACKET,  R_BRACKET, L_PARENTHESES,  R_PARENTHESES, 
     L_BRACE, R_BRACE,
     // miscallenous
-     COLON, COMMA , SEMICOLON, DOT,
+    COLON, COMMA , SEMICOLON, DOT,
     //types
     CONSTANT, STRING,
     // math ops

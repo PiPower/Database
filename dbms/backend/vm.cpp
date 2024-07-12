@@ -1,5 +1,6 @@
 #include "vm.hpp"
 #include <sys/socket.h>
+#include <string.h>
 #define LOCAL_BUFFER_SIZE 10000
 using namespace std;
 
@@ -9,7 +10,8 @@ Operation VirtualMachine::operationTable[(unsigned int)OpCodes::INSTRUCTION_COUN
     &VirtualMachine::executeCreateDatase,
     &VirtualMachine::executeInsertInto,
     nullptr, // exit is handled in execute function
-    &VirtualMachine::executeSelect
+    &VirtualMachine::executeSelect,
+    &VirtualMachine::executeError
 };
 
 
@@ -135,6 +137,16 @@ void VirtualMachine::executeSelect(void *)
     IObuffer* buffer = serialazeTable(subtable);
     sendResponseToClient(buffer);
     freeInstructionData(buffer);
+}
+
+void VirtualMachine::executeError(void *)
+{
+    IObuffer* buffer = createInstructionData();
+    updateStringOutputBuffer(buffer, true, m_ip);
+    sendResponseToClient(buffer);
+    freeInstructionData(buffer);
+
+    m_ip += strlen(m_ip) + 1;
 }
 
 void VirtualMachine::sendResponseToClient(IObuffer *data)

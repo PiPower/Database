@@ -21,6 +21,8 @@ private:
     void executeCreateDatase(void*);
     void executeInsertInto(void*);
     void executeSelect(void*);
+    void executeError(void*);
+    
     void sendResponseToClient(IObuffer* data);
 private:
     static DatabaseState* databaseState;

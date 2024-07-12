@@ -11,7 +11,6 @@ void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
 Page* choosePage(TableState* table,  uint32_t requiredSpace);
 ColumnType* findColumn(TableState* table, std::string* columnName);
 void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, vector<string> requestedColumns);
-void updateStringOutputBuffer( IObuffer* buffer, bool error, const char* errMsg);
 
 IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType> &&columns)
 {

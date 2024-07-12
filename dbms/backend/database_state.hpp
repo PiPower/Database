@@ -56,4 +56,6 @@ IObuffer* serialazeTable(TableState* table);
 IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
                     const std::vector<std::string>& colNames, const std::vector<uint32_t> argOffsets,
                      char* args, unsigned int& bytesWritten, char* msgBuffer, unsigned int bufferSize);
+// misc
+void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg);
 #endif
