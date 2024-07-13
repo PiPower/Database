@@ -17,6 +17,8 @@ void compileInsert(CompilationState& state, AstNode *query);
 void compileSelect(CompilationState& state, AstNode *query);
 void compileStatement(CompilationState& state, AstNode *query);
 void compileError(CompilationState& state, AstNode *query);
+void compileExpression(CompilationState& state, AstNode *query);
+void compileOps(CompilationState& state, AstNode *query);
 
 std::vector<MachineDataTypes> inferMachineDataTypes(AstNode* args);
 void serializeDataType(AstNode* type, InstructionData* byteCode);

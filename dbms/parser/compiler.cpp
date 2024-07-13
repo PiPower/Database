@@ -62,6 +62,49 @@ void compileError(CompilationState &state, AstNode *query)
     emitInstructionWithPayload(OpCodes::ERROR, state.instructionData, errorMsg->c_str(), errorMsg->size() + 1 );
 }
 
+void compileExpression(CompilationState &state, AstNode *query)
+{
+    char* pos = skipBytes(state.instructionData, sizeof(uint32_t));
+    char* oldPos = state.instructionData->curr;
+
+    compileOps(state, query);
+
+    uint32_t size = state.instructionData->curr - oldPos;
+    fillSkippedBytes(state.instructionData, pos, &size, sizeof(uint32_t));
+}
+
+void compileOps(CompilationState &state, AstNode *query)
+{
+    OpCodes code;
+    switch (query->type)
+    {
+    case AstNodeType::GREATER:
+    case AstNodeType::GREATER_EQUAL:
+    case AstNodeType::LESS:
+    case AstNodeType::LESS_EQUAL:
+    case AstNodeType::EQUAL:
+        compileOps(state, query->child[0]);
+        compileOps(state, query->child[1]);
+        code = (OpCodes)( (uint16_t)query->type -  (uint16_t)AstNodeType::GREATER_EQUAL + (uint16_t)OpCodes::GREATER_EQUAL) ;
+        emitInstruction(code , state.instructionData );
+        break;
+    case AstNodeType::CONSTANT:
+    {
+        long long int x = stoi(*(string*)query->data );
+        emitInstructionWithPayload(OpCodes::PUSH_CONSTANT, state.instructionData, &x, sizeof(long long int));
+    }break;
+    case AstNodeType::STRING:
+    case AstNodeType::IDENTIFIER:
+    {
+        code = query->type == AstNodeType::STRING? OpCodes::PUSH_STRING : OpCodes::PUSH_IDENTIFIER;
+        string* literal = (string*) query->data;
+        emitInstructionWithPayload(code, state.instructionData, literal->c_str(), literal->size() + 1);
+    }break;
+    default:
+        break;
+    }
+}
+
 void serializeDataType(AstNode *type, InstructionData* byteCode)
 {
     switch (type->type)
@@ -195,5 +238,14 @@ void compileSelect(CompilationState &state, AstNode *query)
     {
         string* colName = (string*)column->data;
         emitPayload(state.instructionData, colName->c_str(), colName->size() + 1);
+    }
+    if(query->child.size() > 2)
+    {
+        compileExpression(state, query->child[2]);
+    }
+    else
+    {
+        uint32_t size = 0;
+        emitPayload(state.instructionData, &size, sizeof(uint32_t));
     }
 }

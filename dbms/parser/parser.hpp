@@ -11,9 +11,9 @@ enum class AstNodeType
     IDENTIFIER,  CREATE_TABLE,
     PARAMS, CONSTANT, ERROR,
     INSERT, INSERT_ARGS, SELECT,
-    SELECT_ARGS,
-    // types
-    INT_32, CHAR, STRING,
+    SELECT_ARGS, STRING,
+    // types identifiers
+    INT_32, CHAR,
     //math ops
     GREATER_EQUAL, GREATER, LESS_EQUAL, LESS, 
     EQUAL
