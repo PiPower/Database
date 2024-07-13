@@ -4,12 +4,19 @@
 
 enum class OpCodes
 {
-    CREATE_TABLE,
-    INSERT,
-    EXIT,
-    SELECT,
-    ERROR,
-    INSTRUCTION_COUNT
+    // database related ops
+    CREATE_TABLE, INSERT, EXIT, SELECT, ERROR, 
+    DB_OP_COUNT,
+
+    // stack ops
+    PUSH_IDENTIFIER, PUSH_STRING, PUSH_CONSTANT,
+
+    //comparisons
+    GREATER_EQUAL, GREATER, LESS_EQUAL, LESS, 
+    EQUAL,
+
+    // expressions flow control
+    EXIT_EXPRESSION
 };
 
 enum class DataTypes
@@ -23,6 +30,7 @@ enum class MachineDataTypes
 {
     NONE,
     INT32,
+    INT64,
     STRING
 };
 

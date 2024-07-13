@@ -5,7 +5,7 @@
 using namespace std;
 
 DatabaseState* VirtualMachine::databaseState = nullptr;
-Operation VirtualMachine::operationTable[(unsigned int)OpCodes::INSTRUCTION_COUNT] = 
+Operation VirtualMachine::operationTable[(unsigned int)OpCodes::DB_OP_COUNT] = 
 {
     &VirtualMachine::executeCreateDatase,
     &VirtualMachine::executeInsertInto,
@@ -68,10 +68,10 @@ ColumnType VirtualMachine::fetchDataType()
     case DataTypes::CHAR:
         {
             uint16_t size = fetchUint16();
-            return ColumnType{MachineDataTypes::STRING, type,  size};
+            return ColumnType{MachineDataTypes::STRING, type,  size,  0, m_ip};
         }
     case DataTypes::INT:
-        return ColumnType{MachineDataTypes::INT32, type, 4};
+        return ColumnType{MachineDataTypes::INT32, type, 4, 0, m_ip};
         
     default:
         break;
@@ -133,10 +133,16 @@ void VirtualMachine::executeSelect(void *)
         colNames.emplace_back( m_ip );
         m_ip += colNames[i].size() + 1;
     }
+    uint32_t bytecodeSize = *(uint32_t*)m_ip;
+    m_ip += sizeof(uint32_t);
+
     TableState* subtable = createSubtable(databaseState, move(tableName), move(colNames));
+    filterTable(subtable, m_ip);
     IObuffer* buffer = serialazeTable(subtable);
     sendResponseToClient(buffer);
     freeInstructionData(buffer);
+
+    m_ip += bytecodeSize;
 }
 
 void VirtualMachine::executeError(void *)

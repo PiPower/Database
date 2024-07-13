@@ -68,7 +68,8 @@ void compileExpression(CompilationState &state, AstNode *query)
     char* oldPos = state.instructionData->curr;
 
     compileOps(state, query);
-
+    emitInstruction(OpCodes::EXIT_EXPRESSION, state.instructionData);
+    
     uint32_t size = state.instructionData->curr - oldPos;
     fillSkippedBytes(state.instructionData, pos, &size, sizeof(uint32_t));
 }

@@ -73,7 +73,7 @@ int displayResponse(char* buffer, unsigned int bufferSize)
         i++;
     }
 
-
+    printf("*********************************\n");
     fflush(stdout);
     return  bufferCurrent - buffer;
 }
@@ -83,7 +83,10 @@ int main()
     
     string msg = "CREATE TABLE Workers(name char(34), surname char(34), age INT, id INT, partner_name char(7) );"
                  "INSERT Into Workers VALUES(\'Jan\', \'Kowalski\', 31, 1232445, \'Janina\' ), "
-                 "(\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'ASDFGHJ\' ), (\'TOmasz\', \'Walczewki\', 43, 6894, \'HAHAHAH\' );"
+                 "(\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'ASDFGHJ\' ),"
+                 "(\'TOmasz\', \'Walczewki\', 43, 6894, \'HAHAHAH\' ),"
+                 "(\'Ferdynand\', \'Kiepski\', 36, 19, \'Halina\' );"
+                 "SeLect name, age, id, partner_name, surname from Workers;";
                  "SeLect name, age, id, partner_name, surname from Workers where id > 30;";
                  
    /*

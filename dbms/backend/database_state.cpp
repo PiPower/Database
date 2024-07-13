@@ -1,6 +1,7 @@
 #include "database_state.hpp"
 #include <cstring>
 #include <algorithm>
+#include "expression.hpp"
 using namespace std;
 #define PAGE_SIZE 16384
 
@@ -103,6 +104,25 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
     return buffer;
 }
 
+void filterTable(TableState *table, char *byteCode)
+{
+    vector<ExpressionEntry> stack;
+    for(int i=0; i < table->pages.size(); i++ )
+    {
+        Page* currentPage = table->pages[i];
+        for(int j = 0; j < currentPage->entries.size(); j++)
+        {
+            uint16_t currentOffset = GET_OFFSET(currentPage->entries[j] );
+            char* currentEntry = currentPage->dataBase + currentOffset;
+            if( !executeComparison(stack, byteCode, currentEntry, table->columns) )
+            {
+                SET_DEAD(currentPage->entries[j] );
+            }
+            stack.clear();
+        }
+    }
+}
+
 //output of function is binary data in form 
 // header + body
 // header =  item_count(uint32_t)  |col_count(uint16_t) | col_desc_1, ... , col_col_count 
@@ -137,7 +157,6 @@ TableState *createSubtable(DatabaseState *database, std::string &&tableName, std
     }
     TableState* table =  tableIter->second;
 
-    uint16_t maxEntrySize = table->maxEntrySize;
     vector<ColumnType> requestedColumnsTypes;
     for(string& name : colNames)
     {
@@ -146,7 +165,7 @@ TableState *createSubtable(DatabaseState *database, std::string &&tableName, std
     };
 
     TableState* subtable = createTable( requestedColumnsTypes );
-    char* buffer = new char[maxEntrySize];
+    char* buffer = new char[subtable->maxEntrySize];
 
     for(int i=0; i < table->pages.size(); i++ )
     {
