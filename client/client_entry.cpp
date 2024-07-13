@@ -86,7 +86,7 @@ int main()
                  "(\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'ASDFGHJ\' ),"
                  "(\'TOmasz\', \'Walczewki\', 43, 6894, \'HAHAHAH\' ),"
                  "(\'Ferdynand\', \'Kiepski\', 36, 19, \'Halina\' );"
-                 "SeLect name, age, id, partner_name, surname from Workers;";
+                 "SeLect name, age, id, partner_name, surname from Workers;"
                  "SeLect name, age, id, partner_name, surname from Workers where id > 30;";
                  
    /*

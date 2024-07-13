@@ -137,7 +137,10 @@ void VirtualMachine::executeSelect(void *)
     m_ip += sizeof(uint32_t);
 
     TableState* subtable = createSubtable(databaseState, move(tableName), move(colNames));
-    filterTable(subtable, m_ip);
+    if(bytecodeSize > 0)
+    {
+        filterTable(subtable, m_ip);
+    }
     IObuffer* buffer = serialazeTable(subtable);
     sendResponseToClient(buffer);
     freeInstructionData(buffer);
