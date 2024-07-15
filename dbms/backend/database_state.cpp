@@ -107,14 +107,28 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
 void filterTable(TableState *table, char *byteCode)
 {
     vector<ExpressionEntry> stack;
+
+    ColumnTypeHashmap columnHash;
+    for(int i=0; i< table->columns.size(); i++)
+    {
+        columnHash[table->columns[i].columnName] = &table->columns[i];
+    }
+
+    unordered_map<string, ColumnTypeHashmap> columnsPerTable;
+    constexpr const char* name = "temp";
+    columnsPerTable[name] =  move(columnHash);
+
+    vector<EntryBase> entry;
+    entry.push_back({name, nullptr});
     for(int i=0; i < table->pages.size(); i++ )
     {
         Page* currentPage = table->pages[i];
         for(int j = 0; j < currentPage->entries.size(); j++)
         {
             uint16_t currentOffset = GET_OFFSET(currentPage->entries[j] );
-            char* currentEntry = currentPage->dataBase + currentOffset;
-            if( !executeComparison(stack, byteCode, currentEntry, table->columns) )
+
+            entry[0].ptr = currentPage->dataBase + currentOffset;
+            if( !executeComparison(stack, byteCode, entry, columnsPerTable) )
             {
                 SET_DEAD(currentPage->entries[j] );
             }
@@ -123,11 +137,11 @@ void filterTable(TableState *table, char *byteCode)
     }
 }
 
-//output of function is binary data in form 
+// output of function is binary data in form 
 // header + body
-// header =  item_count(uint32_t)  |col_count(uint16_t) | col_desc_1, ... , col_col_count 
+// header =  item_count(uint32_t)  |col_count(uint16_t) | col_desc_1, ... , col_desc_col_count 
 // col_desc_1 = machine_type(uint16_t) | max_col_size(uint16) | col_name (null terminated string)
-// body is just sequence of bytes described by header
+// body is just sequence of bytes described by header in the order following col_desc
 IObuffer* selectFromTable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames)
 {
     auto tableIter = database->tables.find( tableName);

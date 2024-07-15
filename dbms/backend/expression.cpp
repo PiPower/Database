@@ -2,7 +2,8 @@
 
 using namespace std;
 
-bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode, char* entry, const std::vector<ColumnType>& entryDesc)
+bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode, 
+                vector<EntryBase> entriesBasePtr, unordered_map<string, ColumnTypeHashmap>& entryDesc)
 {
     while(true)
     {
@@ -14,25 +15,32 @@ bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode, char
         {
             string name = byteCode; 
             byteCode += name.size() + 1;
-            const ColumnType* column = nullptr;
-            for(int i = 0; i < entryDesc.size(); i++)
+            char *item = nullptr;
+            ColumnType* column = nullptr;
+
+            if(name.find(".") == std::string::npos)
             {
-                if(name == entryDesc[i].columnName)
+                for(int i =0; i < entriesBasePtr.size(); i++)
                 {
-                    column = &entryDesc[i];
-                    break;
+                    auto iter = entryDesc[entriesBasePtr[i].tableName].find(name);
+                    if(iter != entryDesc[entriesBasePtr[i].tableName].end())
+                    {
+                        column = iter->second;
+                        item = entriesBasePtr[i].ptr + column->offset;
+                        break;
+                    }
                 }
             }
 
             ExpressionEntry term;
             if(column->machineType == MachineDataTypes::INT32)
             {
-                term.i_value = *(int*)(entry + column->offset);
+                term.i_value = *(int*)item;
                 term.type = MachineDataTypes::INT64;
             }
             else if(column->machineType == MachineDataTypes::STRING)
             {
-                term.string = entry + column->offset;
+                term.string = item;
                 term.type = MachineDataTypes::STRING;
             }
             stack.push_back(move(term));

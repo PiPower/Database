@@ -3,6 +3,8 @@
 
 #include "database_state.hpp"
 #include <stack>
+#include <unordered_map>
+
 struct ExpressionEntry
 {
     union
@@ -15,7 +17,15 @@ struct ExpressionEntry
     MachineDataTypes type;
 };
 
+struct EntryBase
+{
+    std::string tableName;
+    char* ptr;
+};
 
-bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode, char* entry, const std::vector<ColumnType>& entryDesc);
+typedef std::unordered_map<std::string, ColumnType*> ColumnTypeHashmap;
+
+bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode,
+             std::vector<EntryBase> entriesBasePtr, std::unordered_map<std::string, ColumnTypeHashmap>& entryDesc);
 
 #endif

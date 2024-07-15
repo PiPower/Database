@@ -69,8 +69,11 @@ op:
 primary:
     string | number | identifier
 
+table_specifier:
+    (identifier ".") primary
+
 select_statement:
-    "SELECT" select_args ("," select_args)* "FROM" identifier ["WHERE" primary op primary]
+    "SELECT" select_args ("," select_args)* "FROM" identifier ["WHERE" table_specifier op table_specifier]
     
 statement:
     (create_table_statement | insert_statement | select_statement) ";"

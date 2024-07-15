@@ -108,7 +108,7 @@ void printTable(Table* table)
         printf("%s",  table->columnDescriptors[i].name.c_str());
         if( i <  table->columnDescriptors.size() - 1)
         {
-            printf(" ,");
+            printf(", ");
         }
     }
 
