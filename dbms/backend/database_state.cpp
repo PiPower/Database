@@ -211,6 +211,21 @@ TableState *createSubtable(DatabaseState *database, std::string &&tableName, std
     return subtable;
 }
 
+void freeTable(TableState* table)
+{
+    for(Page* page : table->pages)
+    {
+        freePage(page);
+    }
+    delete table;
+}   
+
+void freePage(Page* page)
+{
+    delete page->dataBase;
+    delete page;
+}
+
 IObuffer *serialazeTable(TableState *table)
 {
     IObuffer* buffer = createInstructionData();

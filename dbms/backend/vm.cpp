@@ -142,6 +142,7 @@ void VirtualMachine::executeSelect(void *)
         filterTable(subtable, m_ip);
     }
     IObuffer* buffer = serialazeTable(subtable);
+    freeTable(subtable);
     sendResponseToClient(buffer);
     freeInstructionData(buffer);
 

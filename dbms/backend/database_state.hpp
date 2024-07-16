@@ -52,12 +52,15 @@ IObuffer* selectFromTable(DatabaseState* database, std::string&& tableName, std:
 IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType>&& columns);
 TableState* createTable(std::vector<ColumnType>& columns);
 TableState* createSubtable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames);
+void freeTable(TableState* table);
+void freePage(Page* page);
 IObuffer* serialazeTable(TableState* table);
 IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
                     const std::vector<std::string>& colNames, const std::vector<uint32_t> argOffsets,
                      char* args, unsigned int& bytesWritten, char* msgBuffer, unsigned int bufferSize);
 
 void filterTable(TableState* table, char* byteCode);
+void joinTable(TableState* l_table, TableState* r_table, char* byteCode);
 // misc
 void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg);
 #endif
