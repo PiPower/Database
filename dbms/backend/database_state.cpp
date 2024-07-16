@@ -99,7 +99,7 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
         }
     }
 
-    snprintf(msgBuffer, bufferSize, "Successfully writtent %u out of %u items", corretValues, numberOfArgs);
+    snprintf(msgBuffer, bufferSize, "Successfully written %u out of %u items", corretValues, numberOfArgs);
     updateStringOutputBuffer(buffer, false, msgBuffer);
     return buffer;
 }

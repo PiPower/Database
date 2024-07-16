@@ -74,12 +74,16 @@ std::vector<Table*> readResponse(Connection *connection)
     {
         int n = recv(connection->sockFd, buffer + size, buffSize, 0);
 
-        if( n < 1)
+        if( n < 1 )
         {
             break;
         }
         size += n;
-        if( size == buffSize)
+        if(size < buffSize)
+        {
+            break;
+        }
+        else if( size == buffSize)
         {
             buffSize *= 2;
             char* temp = new char[buffSize];
@@ -138,7 +142,6 @@ void printTable(Table* table)
         printf("\n");
 
     }
-    printf("\n");
     fflush(stdout);
 }
 

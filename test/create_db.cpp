@@ -10,7 +10,7 @@ int main()
                  "(\'TOmasz\', \'Walczewki\', 43, 6894, \'Jola\' ),"
                  "(\'Ferdynand\', \'Kiepski\', 36, 19, \'Halina\' );"
                  "SeLect name, age, id, partner_name, surname from Workers;"
-                 "SeLect name, age, id, partner_name, surname from Workers where id > 30;";;
+                 "SeLect name, age, id, partner_name, surname from Workers where id > 30;";
 
     Connection* conn = connectToDbms(0, 500);
     sendQuery(conn, msg.c_str());

@@ -28,13 +28,14 @@ int main()
     errorCheck(bind( sock, (sockaddr*) &servaddr, sizeof(sockaddr_in )) );
     errorCheck( listen(sock, 10) );
 
+    // currently serves only one connection dbms-client
+    sockaddr_in clientAddr;
+    socklen_t len;
+    int client = accept(sock,  (sockaddr*)&clientAddr, &len);
+    errorCheck(client);
     char buffer[10000];
     while (true)
     {
-        sockaddr_in clientAddr;
-        socklen_t len;
-        int client = accept(sock,  (sockaddr*)&clientAddr, &len);
-        errorCheck(client);
         recv(client, buffer, 10000, 0);
         vector<AstNode*> queries = parse(buffer);
         InstructionData* byteCode = compile(queries);

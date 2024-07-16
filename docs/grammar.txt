@@ -63,7 +63,7 @@ insert_statement:
 select_args:
     identifier 
 
-op:
+comparison:
     "<" | "<=" | ">" | ">=" | "="
 
 primary:
@@ -72,8 +72,11 @@ primary:
 table_specifier:
     (identifier ".") primary
 
+comparison_expression:
+    table_specifier comparison table_specifier
+
 select_statement:
-    "SELECT" select_args ("," select_args)* "FROM" identifier ["WHERE" table_specifier op table_specifier]
+    "SELECT" select_args ("," select_args)* "FROM" identifier [INNER JOIN identifier ON  comparison_expression] ["WHERE" table_specifier op table_specifier]
     
 statement:
     (create_table_statement | insert_statement | select_statement) ";"
