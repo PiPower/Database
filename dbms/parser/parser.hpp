@@ -11,7 +11,8 @@ enum class AstNodeType
     IDENTIFIER,  CREATE_TABLE,
     PARAMS, CONSTANT, ERROR,
     INSERT, INSERT_ARGS, SELECT,
-    SELECT_ARGS, STRING,
+    SELECT_ARGS, STRING, INNER_JOIN,
+    TABLE_SPEC,
     // types identifiers
     INT_32, CHAR,
     //math ops
@@ -57,7 +58,9 @@ AstNode* parseParameter(ParsingState& state);
 AstNode* parseDataType(ParsingState& state);
 AstNode* parseIdentifier(ParsingState& state);
 AstNode* parseNumber(ParsingState& state);
+AstNode* parseTableSpecifier(ParsingState& state);
 AstNode* parseArgument(ParsingState& state);
+void parseSelectExtensions(ParsingState& state, AstNode* root);
 // epxressions
 AstNode* parseExpression(ParsingState& state);
 AstNode* parseOp(ParsingState& state);

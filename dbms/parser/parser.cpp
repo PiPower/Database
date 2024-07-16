@@ -160,16 +160,7 @@ AstNode *parseSelectStatement(ParsingState &state)
     AstNode* tableName = parseIdentifier(state);
     root->child.push_back(tableName);
 
-    token = state.tokenizer.scan();
-    if(token.type == TokenType::WHERE)
-    {
-        AstNode* expression = parseExpression(state);
-        root->child.push_back(expression);
-    }
-    else
-    {
-        state.tokenizer.putback(token);
-    }
+    parseSelectExtensions(state, root);
     return root;
 }
 
@@ -260,6 +251,28 @@ AstNode *parseNumber(ParsingState &state)
     return node;
 }
 
+AstNode *parseTableSpecifier(ParsingState &state)
+{
+    AstNode* tableSpec = nullptr;
+    Token t1 = state.tokenizer.scan();
+    Token t2 = state.tokenizer.scan();
+
+    if(t2.type == TokenType::DOT && t1.type == TokenType::IDENTIFIER)
+    {   
+        tableSpec = allocateNode(state);
+        tableSpec->type = AstNodeType::TABLE_SPEC;
+        tableSpec->data = t1.data;
+        tableSpec->child.push_back( parsePrimary(state) );
+    }
+    else
+    {
+        state.tokenizer.putback(t1);
+        state.tokenizer.putback(t2);
+        tableSpec = parseIdentifier(state);
+    }
+    return tableSpec;
+}
+
 AstNode *parseArgument(ParsingState &state)
 {
     Token token = state.tokenizer.scan();
@@ -287,11 +300,41 @@ AstNode *parseArgument(ParsingState &state)
     return argument;
 }
 
+void parseSelectExtensions(ParsingState &state, AstNode *root)
+{
+    while(true)
+    {
+        Token token = state.tokenizer.scan();
+        switch (token.type)
+        {
+        case TokenType::WHERE:
+        {
+            AstNode* expression = parseExpression(state);
+            root->child.push_back(expression);
+        }break;
+        case TokenType::INNER:
+        {
+            consumeToken(state, TokenType::JOIN);
+            AstNode* onTable = parseIdentifier(state);
+            onTable->type = AstNodeType::INNER_JOIN;
+            root->child.push_back(onTable);
+            consumeToken(state, TokenType::ON);
+            AstNode* expr = parseExpression(state);
+            root->child.push_back(expr);
+        }break;
+        default:
+            state.tokenizer.putback(token);
+            return;
+        }
+
+    }
+}
+
 AstNode *parseExpression(ParsingState &state)
 {
-    AstNode* leftTerm = parsePrimary(state);
+    AstNode* leftTerm = parseTableSpecifier(state);
     AstNode* op = parseOp(state);
-    AstNode* rightTerm = parsePrimary(state);
+    AstNode* rightTerm = parseTableSpecifier(state);
     op->child.push_back(leftTerm);
     op->child.push_back(rightTerm);
     return op;

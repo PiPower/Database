@@ -30,8 +30,8 @@ int main()
                             "(3, \'Thomas\', \'Jenkins\'),"
                             "(4, \'Peter\', \'Reltih\'),"
                             "(5, \'Angelina\', \'Nilats\');";
-    string select = "SELECT order_id, client_id, product_name, client_name, client_surname FROM Orders"
-                    "INNER JOIN ON Orders.client_id = Clients.client_id;";
+    string select = "SELECT order_id, client_id, product_name, client_name, client_surname FROM Orders "
+                    "INNER JOIN Clients ON Orders.client_id = Clients.client_id;";
 ;
 
     Connection* conn = connectToDbms(1000, 0);

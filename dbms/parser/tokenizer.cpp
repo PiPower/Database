@@ -80,6 +80,10 @@ void Tokenizer::keywordMapInit()
     m_keywordMap["values"] = TokenType::VALUES;
     m_keywordMap["select"] = TokenType::SELECT;
     m_keywordMap["where"] = TokenType::WHERE;
+
+    m_keywordMap["inner"] = TokenType::INNER;
+    m_keywordMap["join"] = TokenType::JOIN;
+    m_keywordMap["on"] = TokenType::ON;
 }
 
 Token Tokenizer::parseIdentifier()
@@ -141,6 +145,9 @@ Token Tokenizer::parsePunctuators()
         break;
     case ',':
         token.type = TokenType::COMMA;
+        break;
+    case '.':
+        token.type = TokenType::DOT;
         break;
     case ':':
         token.type = TokenType::COLON;
