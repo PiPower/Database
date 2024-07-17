@@ -157,8 +157,14 @@ AstNode *parseSelectStatement(ParsingState &state)
 
     consumeToken(state, TokenType::FROM);
 
+    AstNode* tables = allocateNode(state);
+    tables->type = AstNodeType::TABLE_NAMES; 
     AstNode* tableName = parseIdentifier(state);
-    root->child.push_back(tableName);
+    //1st table in table names is always MAIN TABLE
+    tableName->type = AstNodeType::MAIN_TABLE;
+
+    tables->child.push_back(tableName);
+    root->child.push_back(tables);
 
     parseSelectExtensions(state, root);
     return root;
@@ -310,17 +316,25 @@ void parseSelectExtensions(ParsingState &state, AstNode *root)
         case TokenType::WHERE:
         {
             AstNode* expression = parseExpression(state);
-            root->child.push_back(expression);
+            AstNode* whereClause = allocateNode(state);
+            whereClause->type = AstNodeType::WHERE;
+            whereClause->child.push_back(expression);
+
+            root->child.push_back(whereClause);
         }break;
         case TokenType::INNER:
         {
             consumeToken(state, TokenType::JOIN);
             AstNode* onTable = parseIdentifier(state);
-            onTable->type = AstNodeType::INNER_JOIN;
-            root->child.push_back(onTable);
+            onTable->type = AstNodeType::INNER_JOIN_TABLE;
+            root->child[1]->child.push_back(onTable);
+
             consumeToken(state, TokenType::ON);
             AstNode* expr = parseExpression(state);
-            root->child.push_back(expr);
+            AstNode* onClause = allocateNode(state);
+            onClause->type = AstNodeType::INNER_JOIN_ON;
+            onClause->child.push_back(expr);
+            root->child.push_back(onClause);
         }break;
         default:
             state.tokenizer.putback(token);

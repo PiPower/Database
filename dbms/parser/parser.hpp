@@ -11,8 +11,10 @@ enum class AstNodeType
     IDENTIFIER,  CREATE_TABLE,
     PARAMS, CONSTANT, ERROR,
     INSERT, INSERT_ARGS, SELECT,
-    SELECT_ARGS, STRING, INNER_JOIN,
-    TABLE_SPEC,
+    SELECT_ARGS, STRING, INNER_JOIN_ON,
+    TABLE_SPEC, TABLE_NAMES, WHERE,
+    // table type specifier
+    MAIN_TABLE, INNER_JOIN_TABLE,
     // types identifiers
     INT_32, CHAR,
     //math ops

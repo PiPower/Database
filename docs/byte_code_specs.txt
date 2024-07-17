@@ -12,6 +12,9 @@
 // int16. Types can be freerly casted to types that take more
 // space but narrowing conventions are forbidden.
 // NULL is represented by setting all bits to 1 of given type.
+// name = name signifies that names can be used interchangebly
+// in given instruction. For example column_count = k means 
+// that in given instruction k refers to column_count
 //------------------------------------------------------------
 //------------------HELP STRUCTURES---------------------------
 //------------------------------------------------------------
@@ -31,6 +34,7 @@ abstract_types:
 //------------------------------------------------------------
 CREATE_TABLE;
 creates table;
+
 op_code(uint16) | table name(null terminated string) | arg_count ( uint16 ) | type_1, ..., type_k 
 where 
 type_j = one of abstract_types | type name(null terminated string)
@@ -38,6 +42,7 @@ type_j = one of abstract_types | type name(null terminated string)
 //------------------------------------------------------------
 INSERT;
 insert into specifier name; 
+
 op_code(uint16) | table name(null terminated string) | insert_header | arg_1, ..., arg_k;
 where
 arg_j = ( machine_type_id(uint16)  | machine_type )_1 | ... | ( machine_type_id(uint16)  | machine_type )_column_count
@@ -52,19 +57,29 @@ insert_header:
 SELECT;
 select specified columns from database;
 if expression_bytecode_size == 0 then WHERE clause is not used
-op_code(uint16) | table name(null terminated string) | column_count(uint16) | column_name_1(null terminated string), ... , column_name_column_count(null terminated string)
-| expression_bytecode_size(uint32) | bytecode (expression_bytecode_size )
+
+byte_code_tuple:
+    byte_code_size(uint32) | bytecode (expression_bytecode_size)
+
+op_code(uint16) | table_count(uint16) = k | table_name_1(null terminated string) | ... | table_name_k(null terminated string) |
+column_count(uint16) = j | column_name_1(null terminated string), ... , column_name_j(null terminated string) |
+join_byte_code_1(byte_code_tuple) | ... | join_byte_code_{k-1}(byte_code_tuple)|
+where_byte_code(byte_code_tuple)
+
 //------------------------------------------------------------
 PUSH_IDENTIFIER;
+
 push identifier onto the stack;
 op_code(uint16) | table column name (null terminated string)
 
 //------------------------------------------------------------
 PUSH_STRING;
 push string onto the stack;
+
 op_code(uint16) | null terminated string
 
 //------------------------------------------------------------
 PUSH_CONSTANT;
 push constant onto the stack, if constant does not have "." then value is written as 64 int otherwise constant is considered double;
+
 op_code(uint16) | constant(uint64)

@@ -230,19 +230,39 @@ void compileInsert(CompilationState &state, AstNode *query)
 
 void compileSelect(CompilationState &state, AstNode *query)
 {
-    string* tableName = ( string* )query->child[1]->data;
-    emitInstructionWithPayload(OpCodes::SELECT, state.instructionData, tableName->c_str(), tableName->size() + 1);
+    uint16_t tableCount = query->child[1]->child.size();
+    emitInstructionWithPayload(OpCodes::SELECT, state.instructionData, &tableCount, sizeof(uint16_t));
+    for (size_t i = 0; i < tableCount; i++)
+    {
+        string* tableName = (string*)query->child[1]->child[i]->data;
+        emitPayload( state.instructionData, tableName->c_str(), tableName->size() + 1);
+    }
+    
     uint16_t colCount = query->child[0]->child.size();
     emitPayload(state.instructionData, &colCount, sizeof(uint16_t));
-
     for(AstNode* column: query->child[0]->child)
     {
         string* colName = (string*)column->data;
         emitPayload(state.instructionData, colName->c_str(), colName->size() + 1);
     }
-    if(query->child.size() > 2)
+    // compile inner Join expresison
+    auto innerJoinIter = find_if(query->child.begin(), query->child.end(), [](const AstNode* node){
+        return node->type == AstNodeType::INNER_JOIN_ON;
+    });
+
+    if(innerJoinIter != query->child.end())
     {
-        compileExpression(state, query->child[2]);
+        compileExpression(state, (*innerJoinIter)->child[0]);
+    }
+
+    // compile where expresison
+    auto whereIter = find_if(query->child.begin(), query->child.end(), [](const AstNode* node){
+        return node->type == AstNodeType::WHERE;
+    });
+
+    if(whereIter != query->child.end())
+    {
+        compileExpression(state, (*whereIter)->child[0]);
     }
     else
     {
