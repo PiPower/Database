@@ -9,4 +9,4 @@ if(REMOTE_CLIENT)
 	add_definitions(-DREMOTE_CLIENT)
 endif()
 
-add_executable(dbms	dbms_entry.cpp ../utils/logs.cpp ${parse_module} ${backend_module})
+add_executable(dbms	dbms_entry.cpp ${parse_module} ${backend_module})

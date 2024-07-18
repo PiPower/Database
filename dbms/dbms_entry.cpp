@@ -1,7 +1,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "../utils/logs.hpp"
 #include "parser/parser.hpp"
 #include <stdio.h>
 #include <iostream>
@@ -11,6 +10,7 @@
 
 using namespace std;
 
+void errorCheck(int retVal, int fd = 2, const char* additionalMessage = nullptr);
 int main()
 {
     VirtualMachine executor;
@@ -41,4 +41,14 @@ int main()
         InstructionData* byteCode = compile(queries);
         executor.execute(byteCode, client) ;
     }  
+}
+
+void errorCheck(int retVal, int fd, const char* additionalMessage)
+{
+    if(retVal != -1)
+    {
+        return;
+    }
+    dprintf(fd, "Encountered error: %s\n", strerror(errno));
+    exit(-1);
 }

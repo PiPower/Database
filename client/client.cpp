@@ -2,7 +2,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "../utils/logs.hpp"
 #include "string.h"
 #include <vector>
 #include <string>
@@ -34,9 +33,7 @@ struct Table
 
 
 static Table* readTable(char* buffer, const unsigned int totalSize,  unsigned int& readSize);
-
-
-
+static void errorCheck(int retVal, int fd = 2, const char* additionalMessage = nullptr);
 
 Connection* connectToDbms(time_t seconds, suseconds_t microseconds)
 {
@@ -211,4 +208,14 @@ static Table* readTable(char* buffer, const unsigned int totalSize, unsigned int
     }
     readSize = bufferCurrent - buffer;
     return table;
+}
+
+static void errorCheck(int retVal, int fd, const char* additionalMessage)
+{
+    if(retVal != -1)
+    {
+        return;
+    }
+    dprintf(fd, "Encountered error: %s\n", strerror(errno));
+    exit(-1);
 }
