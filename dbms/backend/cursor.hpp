@@ -6,8 +6,12 @@ class Cursor
 {
 public:
     Cursor(TableState* table);
+    bool increment();
+public:
+    TableState* m_table;
 private:
-    TableState* table;
+    int m_currentItem;
+    char* m_currentItemPtr;
 };
 
 

@@ -7,9 +7,9 @@ using namespace std;
 #define PAGE_SIZE 16384
 
 typedef InstructionData IObuffer;
+ unordered_map<string, ColumnTypeHashmap> fetchColumnsFromCursors(const vector<Cursor>& cursors, const vector<string>& columnNames);
 
-
-IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType> &&columns)
+IObuffer* createTable(DatabaseState* database, string&& tableName, vector<ColumnType> &&columns)
 {
     IObuffer* buffer = createInstructionData();
     auto tableIter = database->tables.find( tableName);
@@ -19,21 +19,21 @@ IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vec
         updateStringOutputBuffer(buffer, true, errMsg);
         return buffer;
     }
-
-    database->tables[move(tableName)] = createTable( columns );
+    database->tables[move(tableName)] = createTable( columns, tableName );
 
     static const char* const successMSG = "Table has been created succesfully";
     updateStringOutputBuffer(buffer, false, successMSG);
     return buffer;
 }
 
-TableState *createTable(std::vector<ColumnType>& columns)
+TableState *createTable(vector<ColumnType>& columns,const string& tableName)
 {
     TableState* table = new TableState();
     table->columns = columns;
     table->maxEntrySize = 0;
     table->itemCount = 0;
     table->flags.variableSizeEntry = false;
+    table->tableName = tableName;
     for(auto& col :  table->columns)
     {
         col.offset = table->maxEntrySize;
@@ -138,8 +138,38 @@ TableState* selectAndMerge(DatabaseState *database, const vector<string>& tableN
                             const vector<char*>& byteCode, const std::vector<std::string>& colNames)
 {
     vector<Cursor> cursors = createListOfCursors(database, tableNames);
-    
+    unordered_map<string, ColumnTypeHashmap> columnsPerTable = fetchColumnsFromCursors(cursors, colNames);
+    vector<ColumnType> columns;
+    for(auto& hash : columnsPerTable)
+    {
+        for(auto& columnTuple : hash.second)
+        {
+            columns.push_back(*columnTuple.second);
+        }
+    }
+    TableState* outTable = createTable(columns, "" );
+    vector<ExpressionEntry> stack;
 
+    int x = 0 ;
+    while (true)
+    {
+        
+        x++;
+        for(int i = 0; i < cursors.size(); i++)
+        {
+            bool wrapAround = cursors[i].increment();
+            if(!wrapAround)
+            {
+                break;
+            }
+
+            if(wrapAround && i == cursors.size() - 1)
+            {
+                return outTable;
+            }
+        }
+    }
+    
 
 }
 
@@ -184,7 +214,7 @@ TableState *createSubtable(DatabaseState *database, std::string &&tableName, std
         requestedColumnsTypes.push_back(column);
     };
 
-    TableState* subtable = createTable( requestedColumnsTypes );
+    TableState* subtable = createTable( requestedColumnsTypes, "" );
     char* buffer = new char[subtable->maxEntrySize];
 
     for(int i=0; i < table->pages.size(); i++ )
@@ -354,9 +384,9 @@ Page *choosePage(TableState *table, uint32_t requiredSpace)
     return table->pages[currentPage + 1];
 }
 
-ColumnType *findColumn(TableState *table, std::string *columnName)
+const ColumnType *findColumn(const TableState *table,const std::string *columnName)
 {
-    vector<ColumnType>& tableColumns =  table->columns;
+    const vector<ColumnType>& tableColumns =  table->columns;
     for(int i=0; i < tableColumns.size(); i++)
     {
         if(tableColumns[i].columnName == *columnName )
@@ -370,11 +400,11 @@ ColumnType *findColumn(TableState *table, std::string *columnName)
 void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<string> requestedColumns)
 {
     uint16_t maxEntrySize = 0;
-    vector<ColumnType*> requestedColumnsTypes;
+    vector<const ColumnType*> requestedColumnsTypes;
     unsigned int headerSize = sizeof(uint32_t) + sizeof(uint16_t);
     for(string& name : requestedColumns)
     {
-        ColumnType* column =  findColumn(table, &name);
+        const ColumnType* column =  findColumn(table, &name);
         maxEntrySize += column->size;
         requestedColumnsTypes.push_back(column);
         headerSize += sizeof(uint16_t) * 2;
@@ -409,7 +439,7 @@ void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<s
             uint16_t currentOffset = GET_OFFSET(currentPage->entries[j]);
             char* currentEntry = currentPage->dataBase + currentOffset;
             char* currentEntryBuffer = entryBuffer;
-            for(ColumnType* column : requestedColumnsTypes)
+            for(const ColumnType* column : requestedColumnsTypes)
             {
                 uint16_t copySize = column->machineType == MachineDataTypes::STRING ? 
                 strlen(currentEntry + column->offset) + 1 :
@@ -457,4 +487,29 @@ void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg)
     emitPayload(buffer, &msgSize, 2);
     emitPayload(buffer, outputType, strlen(outputType) + 1);
     emitPayload(buffer, msg, strlen(msg) + 1);
+}
+
+
+ unordered_map<string, ColumnTypeHashmap> fetchColumnsFromCursors(const vector<Cursor>& cursors, const vector<string>& columnNames)
+{   
+    unordered_map<string, ColumnTypeHashmap> out;
+    for(const string& colName : columnNames)
+    {
+        const ColumnType* columnTarget = nullptr;
+        int i =0;
+        for(; i < cursors.size(); i++)
+        {
+            // if multiple tables share name of the column
+            // pick column from the first table where the name occured in
+            columnTarget = findColumn(cursors[i].m_table, &colName);
+            if( columnTarget != nullptr)
+            {   
+                break;
+            }
+        }
+        out[cursors[i].m_table->tableName][colName] = const_cast<ColumnType*>(columnTarget);
+        columnTarget = nullptr;
+    }
+
+    return out;
 }

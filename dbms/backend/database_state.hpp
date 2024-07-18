@@ -37,6 +37,7 @@ struct TableState
     TableFags flags;
     std::vector<Page*> pages;
     uint64_t itemCount;
+    std::string tableName;
 
 };
 
@@ -51,7 +52,7 @@ IObuffer* selectFromTable(DatabaseState* database, std::string&& tableName, std:
 
 //general ops
 IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType>&& columns);
-TableState* createTable(std::vector<ColumnType>& columns);
+TableState* createTable(std::vector<ColumnType>& columns, const std::string& tableName);
 TableState* createSubtable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames);
 void freeTable(TableState* table);
 void freePage(Page* page);
@@ -68,6 +69,7 @@ void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg);
 uint32_t copyMachineDataType(char* scratchpad, ColumnType& columnDesc, char* sourceData, MachineDataTypes currentType);
 void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
 Page* choosePage(TableState* table,  uint32_t requiredSpace);
-ColumnType* findColumn(TableState* table, std::string* columnName);
+const ColumnType* findColumn(const TableState* table, const std::string* columnName);
 void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, std::vector< std::string> requestedColumns);
+
 #endif

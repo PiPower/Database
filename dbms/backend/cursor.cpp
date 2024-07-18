@@ -3,9 +3,23 @@ using namespace std;
 
 Cursor::Cursor(TableState *table)
 :
-table(table)
+m_table(table), m_currentItem(0), m_currentItemPtr(0)
 {
 
+}
+
+bool Cursor::increment()
+{
+    bool wrapAround = false;
+    m_currentItem++;
+
+    if(m_currentItem >= m_table->itemCount)
+    {
+        wrapAround = true;
+        m_currentItem = 0;
+    }
+
+    return wrapAround;
 }
 
 std::vector<Cursor> createListOfCursors(DatabaseState* database, const vector<string>& tableNames)
