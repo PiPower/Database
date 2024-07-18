@@ -36,6 +36,7 @@ struct TableState
     unsigned int maxEntrySize;
     TableFags flags;
     std::vector<Page*> pages;
+    uint64_t itemCount;
 
 };
 
@@ -60,7 +61,13 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
                      char* args, unsigned int& bytesWritten, char* msgBuffer, unsigned int bufferSize);
 
 void filterTable(TableState* table, char* byteCode);
-void joinTable(TableState* l_table, TableState* r_table, char* byteCode);
+TableState* selectAndMerge(DatabaseState* database, const std::vector<std::string>& tableNames , 
+                            const std::vector<char*>& byteCodes, const std::vector<std::string>& colNames);
 // misc
 void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg);
+uint32_t copyMachineDataType(char* scratchpad, ColumnType& columnDesc, char* sourceData, MachineDataTypes currentType);
+void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
+Page* choosePage(TableState* table,  uint32_t requiredSpace);
+ColumnType* findColumn(TableState* table, std::string* columnName);
+void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, std::vector< std::string> requestedColumns);
 #endif

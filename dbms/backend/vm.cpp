@@ -122,8 +122,16 @@ void VirtualMachine::executeInsertInto(void *)
 
 void VirtualMachine::executeSelect(void *)
 {
-    string tableName = m_ip;
-    m_ip += tableName.size() + 1;
+    uint16_t tableCount = *(uint16_t*)m_ip;
+    m_ip += sizeof(uint16_t);
+
+    vector<string> tableNames;
+    for(int i=0; i < tableCount; i++)
+    {
+        string tableName = m_ip;
+        m_ip += tableName.size() + 1;
+        tableNames.push_back( move(tableName) );
+    }
 
     vector<string> colNames;
 
@@ -133,10 +141,30 @@ void VirtualMachine::executeSelect(void *)
         colNames.emplace_back( m_ip );
         m_ip += colNames[i].size() + 1;
     }
+
+    vector<char*> joinCodes;
+    for(int i=0; i < tableCount - 1; i++)
+    {
+        uint32_t bytecodeSize = *(uint32_t*)m_ip;
+        m_ip += sizeof(uint32_t);
+        //if byte_code_size  == 1 then INNER_JOIN_ON clause is not used
+        char* joinCode = bytecodeSize > 1 ? m_ip : nullptr;
+        joinCodes.push_back(joinCode);
+        m_ip += bytecodeSize;
+    }
+
+    TableState* subtable;
+    if(tableCount == 1)
+    {
+        subtable = createSubtable(databaseState, move(tableNames[0]), move(colNames));
+    }
+    else
+    {
+        subtable = selectAndMerge(databaseState, tableNames,  joinCodes, colNames);
+    }
+
     uint32_t bytecodeSize = *(uint32_t*)m_ip;
     m_ip += sizeof(uint32_t);
-
-    TableState* subtable = createSubtable(databaseState, move(tableName), move(colNames));
     if(bytecodeSize > 0)
     {
         filterTable(subtable, m_ip);

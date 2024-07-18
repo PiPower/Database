@@ -5,6 +5,10 @@ using namespace std;
 bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode, 
                 vector<EntryBase> entriesBasePtr, unordered_map<string, ColumnTypeHashmap>& entryDesc)
 {
+    if(!byteCode)
+    {
+        return true;
+    }
     while(true)
     {
         OpCodes opcode = (OpCodes) *(uint16_t*)byteCode;

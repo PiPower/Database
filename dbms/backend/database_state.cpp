@@ -1,17 +1,13 @@
 #include "database_state.hpp"
 #include <cstring>
 #include <algorithm>
+#include "cursor.hpp"
 #include "expression.hpp"
 using namespace std;
 #define PAGE_SIZE 16384
 
 typedef InstructionData IObuffer;
 
-uint32_t copyMachineDataType(char* scratchpad, ColumnType& columnDesc, char* sourceData, MachineDataTypes currentType);
-void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
-Page* choosePage(TableState* table,  uint32_t requiredSpace);
-ColumnType* findColumn(TableState* table, std::string* columnName);
-void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, vector<string> requestedColumns);
 
 IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType> &&columns)
 {
@@ -36,6 +32,7 @@ TableState *createTable(std::vector<ColumnType>& columns)
     TableState* table = new TableState();
     table->columns = columns;
     table->maxEntrySize = 0;
+    table->itemCount = 0;
     table->flags.variableSizeEntry = false;
     for(auto& col :  table->columns)
     {
@@ -137,12 +134,21 @@ void filterTable(TableState *table, char *byteCode)
     }
 }
 
+TableState* selectAndMerge(DatabaseState *database, const vector<string>& tableNames, 
+                            const vector<char*>& byteCode, const std::vector<std::string>& colNames)
+{
+    vector<Cursor> cursors = createListOfCursors(database, tableNames);
+    
+
+
+}
+
 // output of function is binary data in form 
 // header + body
 // header =  item_count(uint32_t)  |col_count(uint16_t) | col_desc_1, ... , col_desc_col_count 
 // col_desc_1 = machine_type(uint16_t) | max_col_size(uint16) | col_name (null terminated string)
 // body is just sequence of bytes described by header in the order following col_desc
-IObuffer* selectFromTable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames)
+IObuffer* selectFromTable(DatabaseState *database, string &&tableName, vector<string> &&colNames)
 {
     auto tableIter = database->tables.find( tableName);
     if(tableIter ==  database->tables.end())
@@ -329,7 +335,7 @@ void insertIntoPage(TableState *table, char *data, uint32_t dataSize)
     chosenPage->entries.push_back(entryDesc);
     memcpy(chosenPage->pageCurrent, data, dataSize);
     chosenPage->pageCurrent += dataSize;
-
+    table->itemCount++;
 }
 
 Page *choosePage(TableState *table, uint32_t requiredSpace)
