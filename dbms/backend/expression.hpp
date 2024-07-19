@@ -26,6 +26,6 @@ struct EntryBase
 typedef std::unordered_map<std::string, ColumnType*> ColumnTypeHashmap;
 
 bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode,
-             std::vector<EntryBase> entriesBasePtr, std::unordered_map<std::string, ColumnTypeHashmap>& entryDesc);
+             std::vector<EntryBase>& entriesBasePtr, std::unordered_map<std::string, ColumnTypeHashmap>& entryDesc);
 
 #endif

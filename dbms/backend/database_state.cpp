@@ -7,7 +7,7 @@ using namespace std;
 #define PAGE_SIZE 16384
 
 typedef InstructionData IObuffer;
- unordered_map<string, ColumnTypeHashmap> fetchColumnsFromCursors(const vector<Cursor>& cursors, const vector<string>& columnNames);
+pair<vector<ColumnType>, vector<string>> fetchColumnsFromCursors(const vector<Cursor>& cursors, const vector<string>& columnNames);
 
 IObuffer* createTable(DatabaseState* database, string&& tableName, vector<ColumnType> &&columns)
 {
@@ -137,24 +137,77 @@ void filterTable(TableState *table, char *byteCode)
 TableState* selectAndMerge(DatabaseState *database, const vector<string>& tableNames, 
                             const vector<char*>& byteCode, const std::vector<std::string>& colNames)
 {
+    // create cursors and bind information about columns and each of tables used in executeComparison
     vector<Cursor> cursors = createListOfCursors(database, tableNames);
-    unordered_map<string, ColumnTypeHashmap> columnsPerTable = fetchColumnsFromCursors(cursors, colNames);
-    vector<ColumnType> columns;
-    for(auto& hash : columnsPerTable)
+    unordered_map<string, ColumnTypeHashmap> columnsPerTable;
+    for(int i=0; i < cursors.size(); i++)
     {
-        for(auto& columnTuple : hash.second)
+        vector<ColumnType>& columns = cursors[i].m_table->columns;
+        for(int j =0; j < columns.size(); j++)
         {
-            columns.push_back(*columnTuple.second);
+            columnsPerTable[cursors[i].m_table->tableName][columns[j].columnName] = &columns[j];
         }
     }
-    TableState* outTable = createTable(columns, "" );
-    vector<ExpressionEntry> stack;
 
-    int x = 0 ;
+    // create information about used column in new table, and store parent tables of those columns
+    auto colsAndTableNames = fetchColumnsFromCursors(cursors, colNames);
+    vector<ColumnType> columns = move(colsAndTableNames.first);
+    vector<string> columnParentTables = move(colsAndTableNames.second);
+    uint32_t maxSize = 0;
+    for(ColumnType& col : columns)
+    {
+        maxSize+= col.size;
+    }
+
+    
+    TableState* outTable = createTable(columns, "" );
+    //preper entry data for executeComparison and copy actual data
+    vector<EntryBase> entries;
+    unordered_map<string, char*> entryMap;
+    for(int i = 0; i < cursors.size(); i++)
+    {
+        entries.push_back( {cursors[i].m_table->tableName, nullptr } );
+        entryMap[cursors[i].m_table->tableName] = nullptr;
+    }
+
+    char* entryBuffer = new char[maxSize];
+    char* entryBufferCurrent = entryBuffer;
+    vector<ExpressionEntry> stack;
     while (true)
     {
-        
-        x++;
+        //update entry info
+        for(int i = 0; i < cursors.size(); i++)
+        {
+            entries[i].ptr =  cursors[i].getEntry();
+            entryMap[cursors[i].m_table->tableName] = entries[i].ptr;
+        }
+
+        // check if conditions are met
+        bool belongsToTable;
+        for(int i=0; i < byteCode.size(); i++)
+        {
+            belongsToTable = executeComparison( stack, byteCode[i], entries, columnsPerTable);
+            if(!belongsToTable)
+            {
+                break;
+            }
+
+        }
+
+        // if met add elem to output table
+        if(belongsToTable)
+        {
+            for(int i = 0; i < columns.size(); i++)
+            {
+                memcpy(entryBufferCurrent, entryMap[columnParentTables[i]] + columns[i].offset, columns[i].size);
+                entryBufferCurrent += columns[i].size;
+            }
+            insertIntoPage(outTable, entryBuffer, entryBufferCurrent - entryBuffer);
+            entryBufferCurrent = entryBuffer;
+        }
+
+        stack.clear();
+        //increment cursors, if l-th cursor wraps around increment l+1th cursor
         for(int i = 0; i < cursors.size(); i++)
         {
             bool wrapAround = cursors[i].increment();
@@ -165,6 +218,7 @@ TableState* selectAndMerge(DatabaseState *database, const vector<string>& tableN
 
             if(wrapAround && i == cursors.size() - 1)
             {
+                delete[] entryBuffer;
                 return outTable;
             }
         }
@@ -490,9 +544,10 @@ void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg)
 }
 
 
- unordered_map<string, ColumnTypeHashmap> fetchColumnsFromCursors(const vector<Cursor>& cursors, const vector<string>& columnNames)
+pair<vector<ColumnType>, vector<string>> fetchColumnsFromCursors(const vector<Cursor>& cursors, const vector<string>& columnNames)
 {   
-    unordered_map<string, ColumnTypeHashmap> out;
+    vector<ColumnType> out;
+    vector<string> outTables;
     for(const string& colName : columnNames)
     {
         const ColumnType* columnTarget = nullptr;
@@ -507,9 +562,9 @@ void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg)
                 break;
             }
         }
-        out[cursors[i].m_table->tableName][colName] = const_cast<ColumnType*>(columnTarget);
-        columnTarget = nullptr;
+        out.push_back(*columnTarget);
+        outTables.push_back(cursors[i].m_table->tableName);
     }
 
-    return out;
+    return make_pair(move(out), move(outTables)) ;
 }

@@ -7,6 +7,7 @@ class Cursor
 public:
     Cursor(TableState* table);
     bool increment();
+    char* getEntry();
 public:
     TableState* m_table;
 private:

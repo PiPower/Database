@@ -30,7 +30,9 @@ int main()
                             "(3, \'Thomas\', \'Jenkins\'),"
                             "(4, \'Peter\', \'Reltih\'),"
                             "(5, \'Angelina\', \'Nilats\');";
-    string select = "SELECT order_id, client_id, product_name, client_name, client_surname FROM Orders "
+    string select_1 = "Select product_name, order_id, product_name, client_id from Orders;";
+    string select_2 = "select client_id, client_name, client_surname from Clients;";
+    string inner_join = "SELECT order_id, client_id, product_name, client_name, client_surname FROM Orders "
                     "INNER JOIN Clients ON Orders.client_id = Clients.client_id;";
 ;
 
@@ -39,5 +41,7 @@ int main()
     processQuery(create_t2, conn);
     processQuery(insert_orders, conn);
     processQuery(insert_clients, conn);
-    processQuery(select, conn);
+    processQuery(select_1, conn);
+    processQuery(select_2, conn);
+    processQuery(inner_join, conn);
 }

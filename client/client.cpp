@@ -128,7 +128,7 @@ void printTable(Table* table)
             case MachineDataTypes::STRING:
             {
                 int charCount = min(strlen(data) + 1,(unsigned long) table->columnDescriptors[column].maxSize);
-                printf("%.*s ", charCount, data );
+                printf("%.*s", charCount, data );
             }break;
             }
             if(column < table->columnDescriptors.size() -1)

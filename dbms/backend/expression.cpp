@@ -3,7 +3,7 @@
 using namespace std;
 
 bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode, 
-                vector<EntryBase> entriesBasePtr, unordered_map<string, ColumnTypeHashmap>& entryDesc)
+                vector<EntryBase>& entriesBasePtr, unordered_map<string, ColumnTypeHashmap>& entryDesc)
 {
     if(!byteCode)
     {
@@ -22,7 +22,8 @@ bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode,
             char *item = nullptr;
             ColumnType* column = nullptr;
 
-            if(name.find(".") == std::string::npos)
+            size_t pos = name.find(".");
+            if(pos == string::npos)
             {
                 for(int i =0; i < entriesBasePtr.size(); i++)
                 {
@@ -34,6 +35,22 @@ bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode,
                         break;
                     }
                 }
+            }
+            else
+            {
+                string tableName = name.substr(0, pos);
+                string columnName = name.substr(pos + 1, string::npos);
+                column = entryDesc[tableName][columnName];
+                int j =0;
+                while (j < entryDesc.size())
+                {
+                    if( entriesBasePtr[j].tableName == tableName)
+                    {
+                        break;
+                    }
+                    j++;
+                }
+                item = entriesBasePtr[j].ptr + column->offset;
             }
 
             ExpressionEntry term;
@@ -74,7 +91,19 @@ bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode,
             term = stack.back();
             return term.i_value > 0;
         }
+        case OpCodes::EQUAL:
+        {
+            ExpressionEntry l, r;
+            r = stack.back();
+            stack.pop_back();
+            l = stack.back();
+            l.i_value = l.i_value == r.i_value;
+            l.type = MachineDataTypes::INT64;
+            stack.push_back(l);
+        }break;
         default:
+            printf("usupported exepression op\n");
+            exit(-1);
             break;
         }
     }

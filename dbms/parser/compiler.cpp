@@ -101,6 +101,12 @@ void compileOps(CompilationState &state, AstNode *query)
         string* literal = (string*) query->data;
         emitInstructionWithPayload(code, state.instructionData, literal->c_str(), literal->size() + 1);
     }break;
+    case AstNodeType::TABLE_SPEC:
+    {
+        code = query->type == AstNodeType::STRING? OpCodes::PUSH_STRING : OpCodes::PUSH_IDENTIFIER;
+        string literal = *(string*) query->data + "." + *(string*)query->child[0]->data;
+        emitInstructionWithPayload(code, state.instructionData, literal.c_str(), literal.size() + 1);
+    }break;
     default:
         break;
     }

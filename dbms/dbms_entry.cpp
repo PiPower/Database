@@ -31,16 +31,26 @@ int main()
     // currently serves only one connection dbms-client
     sockaddr_in clientAddr;
     socklen_t len;
+a:
     int client = accept(sock,  (sockaddr*)&clientAddr, &len);
     errorCheck(client);
     char buffer[10000];
     while (true)
     {
-        recv(client, buffer, 10000, 0);
-        vector<AstNode*> queries = parse(buffer);
-        InstructionData* byteCode = compile(queries);
-        executor.execute(byteCode, client) ;
+        int n = recv(client, buffer, 10000, 0);
+        if(n == 0)
+        {
+            goto a;
+        }
+        if( n > 0)
+        {
+            vector<AstNode*> queries = parse(buffer);
+            InstructionData* byteCode = compile(queries);
+            executor.execute(byteCode, client);
+        }
     }  
+
+
 }
 
 void errorCheck(int retVal, int fd, const char* additionalMessage)

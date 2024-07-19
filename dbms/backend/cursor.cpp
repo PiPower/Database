@@ -22,6 +22,23 @@ bool Cursor::increment()
     return wrapAround;
 }
 
+char *Cursor::getEntry()
+{
+    int i = 0;
+    int j = 0;
+    while (i <= m_currentItem)
+    {
+        i += m_table->pages[j]->entries.size(); 
+        j++;
+    }
+    j--;
+    Page* page = m_table->pages[j];
+
+    i-= page->entries.size();
+    int index = m_currentItem - i;
+    return page->dataBase + GET_OFFSET(page->entries[index]);
+}
+
 std::vector<Cursor> createListOfCursors(DatabaseState* database, const vector<string>& tableNames)
 {
     vector<Cursor> cursors;
