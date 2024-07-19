@@ -34,7 +34,9 @@ int main()
     string select_2 = "select client_id, client_name, client_surname from Clients;";
     string inner_join = "SELECT order_id, client_id, product_name, client_name, client_surname FROM Orders "
                     "INNER JOIN Clients ON Orders.client_id = Clients.client_id;";
-;
+    string inner_join_where = "SELECT order_id, client_id, product_name, client_name, client_surname FROM Orders "
+                    "INNER JOIN Clients ON Orders.client_id = Clients.client_id WHERE order_id > 5000; ";
+
 
     Connection* conn = connectToDbms(1000, 0);
     processQuery(create_t1, conn);
@@ -44,4 +46,5 @@ int main()
     processQuery(select_1, conn);
     processQuery(select_2, conn);
     processQuery(inner_join, conn);
+    processQuery(inner_join_where, conn);
 }

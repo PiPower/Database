@@ -268,13 +268,13 @@ AstNode *parseTableSpecifier(ParsingState &state)
         tableSpec = allocateNode(state);
         tableSpec->type = AstNodeType::TABLE_SPEC;
         tableSpec->data = t1.data;
-        tableSpec->child.push_back( parsePrimary(state) );
+        tableSpec->child.push_back( parseIdentifier(state) );
     }
     else
     {
         state.tokenizer.putback(t1);
         state.tokenizer.putback(t2);
-        tableSpec = parseIdentifier(state);
+        tableSpec = parsePrimary(state);
     }
     return tableSpec;
 }
