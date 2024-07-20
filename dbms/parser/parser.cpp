@@ -48,6 +48,7 @@ std::vector<AstNode*> parse(const char *text)
         statements.clear();
         statements.push_back( new AstNode{AstNodeType::ERROR} );
         statements[0]->data = new string( state.errorMessage );
+        return statements;
     }
     while (state.tokenizer.peekToken().type != TokenType::END_OF_FILE)
     {
@@ -407,7 +408,7 @@ void freeNode(AstNode *node)
 void triggerParserError(ParsingState &state, int value, const char* errorMessage)
 {
     state.invalidQuery = true;
-    int errLen = strlen(errorMessage  + 1);
+    int errLen = strlen(errorMessage) + 1;
     if( errLen > ERROR_BUFFER_SIZE)
     {
         errLen = ERROR_BUFFER_SIZE;
