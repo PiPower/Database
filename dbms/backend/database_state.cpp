@@ -40,9 +40,7 @@ TableState *createTable(vector<ColumnType>& columns,const string& tableName)
         table->maxEntrySize += col.size;
     }
 
-    Page* page= new Page();
-    page->dataBase = new char[PAGE_SIZE];
-    page->pageCurrent = page->dataBase;
+    Page* page= createPage();
     table->pages.push_back( page );
     return table;
 }
@@ -101,7 +99,7 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
     return buffer;
 }
 
-void filterTable(TableState *table, char *byteCode)
+int filterTable(TableState *table, char *byteCode, bool inverseResult)
 {
     vector<ExpressionEntry> stack;
 
@@ -117,21 +115,33 @@ void filterTable(TableState *table, char *byteCode)
 
     vector<EntryBase> entry;
     entry.push_back({name, nullptr});
+    int deleted = 0;
     for(int i=0; i < table->pages.size(); i++ )
     {
         Page* currentPage = table->pages[i];
-        for(int j = 0; j < currentPage->entries.size(); j++)
+
+        for(int j = 0; j < currentPage->aliveEntries; j++)
         {
             uint16_t currentOffset = GET_OFFSET(currentPage->entries[j] );
 
             entry[0].ptr = currentPage->dataBase + currentOffset;
-            if( !executeComparison(stack, byteCode, entry, columnsPerTable) )
+            bool expRes = !executeComparison(stack, byteCode, entry, columnsPerTable);
+            expRes = inverseResult? !expRes : expRes;
+            if(expRes)
             {
                 SET_DEAD(currentPage->entries[j] );
+                deleted++;
+                table->itemCount--;
+                swap(currentPage->entries[j], currentPage->entries[currentPage->aliveEntries - 1] );
+                currentPage->aliveEntries--;
+                j--;
             }
             stack.clear();
         }
+    
     }
+
+    return deleted;
 }
 
 TableState* selectAndMerge(DatabaseState *database, const vector<string>& tableNames, 
@@ -308,7 +318,27 @@ void freeTable(TableState* table)
         freePage(page);
     }
     delete table;
-}   
+}
+
+IObuffer*  filterTable(DatabaseState *database, std::string& tableName, 
+                        char* byteCode, char* msgBuffer, unsigned int bufferSize, bool inverseResult)
+{
+    IObuffer* buffer = createInstructionData();
+
+    auto tableIter = database->tables.find( tableName);
+    if(tableIter ==  database->tables.end())
+    {
+        static const char* const errMsg = "Table with specified name does not exist";
+        updateStringOutputBuffer(buffer, true, errMsg);
+        return buffer;
+    }
+
+    int deletedRows = filterTable(tableIter->second, byteCode, inverseResult);
+
+    snprintf(msgBuffer, bufferSize, "Deleted %d items", deletedRows);
+    updateStringOutputBuffer(buffer, false, msgBuffer);
+    return buffer;
+}
 
 void freePage(Page* page)
 {
@@ -413,10 +443,11 @@ void insertIntoPage(TableState *table, char *data, uint32_t dataSize)
 {
     Page* chosenPage = choosePage(table, dataSize);
     uint16_t offset = chosenPage->pageCurrent - chosenPage->dataBase ;
-    EntryDescriptor entryDesc;
+    EntryDescriptor entryDesc = 0;
     SET_ALIVE(entryDesc);
     SET_OFFSET(entryDesc, offset);
     chosenPage->entries.push_back(entryDesc);
+    chosenPage->aliveEntries++;
     memcpy(chosenPage->pageCurrent, data, dataSize);
     chosenPage->pageCurrent += dataSize;
     table->itemCount++;
@@ -431,9 +462,7 @@ Page *choosePage(TableState *table, uint32_t requiredSpace)
         return table->pages[currentPage];
     }
 
-    Page* page= new Page();
-    page->dataBase = new char[PAGE_SIZE];
-    page->pageCurrent = page->dataBase;
+    Page* page = createPage();
     table->pages.push_back( page );
     return table->pages[currentPage + 1];
 }
@@ -514,6 +543,15 @@ void selectFromPagesFixedEntrySize(IObuffer *buffer, TableState *table, vector<s
     header -= sizeof(uint32_t);
     *(uint32_t*)header = selectedValues;
     fillSkippedBytes(buffer, skippedPos, header, headerSize);
+}
+
+Page *createPage()
+{
+    Page* page= new Page();
+    page->dataBase = new char[PAGE_SIZE];
+    page->pageCurrent = page->dataBase;
+    page->aliveEntries = 0;
+    return page;
 }
 
 // creating buffer for error message

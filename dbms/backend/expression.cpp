@@ -76,13 +76,22 @@ bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode,
             stack.push_back( move(term) );
         }break;
         case OpCodes::GREATER:
+        case OpCodes::GREATER_EQUAL:
+        case OpCodes::EQUAL:
+        case OpCodes::LESS:
+        case OpCodes::LESS_EQUAL:
         {
             ExpressionEntry l, r;
             r = stack.back();
             stack.pop_back();
             l = stack.back();
-            l.i_value = l.i_value > r.i_value;
             l.type = MachineDataTypes::INT64;
+            if(opcode == OpCodes::GREATER ) { l.i_value = l.i_value > r.i_value;}
+            else if(opcode == OpCodes::GREATER ) { l.i_value = l.i_value > r.i_value;}
+            else if(opcode == OpCodes::GREATER_EQUAL ) { l.i_value = l.i_value >= r.i_value;}
+            else if(opcode == OpCodes::EQUAL ) { l.i_value = l.i_value == r.i_value;}
+            else if(opcode == OpCodes::LESS ) { l.i_value = l.i_value < r.i_value;}
+            else if(opcode == OpCodes::LESS_EQUAL ) { l.i_value = l.i_value <= r.i_value;}
             stack.push_back(l);
         }break;
         case OpCodes::EXIT_EXPRESSION:
@@ -91,16 +100,6 @@ bool executeComparison(std::vector<ExpressionEntry>& stack, char* byteCode,
             term = stack.back();
             return term.i_value > 0;
         }
-        case OpCodes::EQUAL:
-        {
-            ExpressionEntry l, r;
-            r = stack.back();
-            stack.pop_back();
-            l = stack.back();
-            l.i_value = l.i_value == r.i_value;
-            l.type = MachineDataTypes::INT64;
-            stack.push_back(l);
-        }break;
         default:
             printf("usupported exepression op\n");
             exit(-1);

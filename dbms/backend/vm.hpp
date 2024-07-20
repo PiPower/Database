@@ -22,7 +22,8 @@ private:
     void executeInsertInto(void*);
     void executeSelect(void*);
     void executeError(void*);
-    
+    void executeFilter(void*);
+
     void sendResponseToClient(IObuffer* data);
 private:
     static DatabaseState* databaseState;

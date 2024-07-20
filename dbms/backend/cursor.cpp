@@ -28,13 +28,13 @@ char *Cursor::getEntry()
     int j = 0;
     while (i <= m_currentItem)
     {
-        i += m_table->pages[j]->entries.size(); 
+        i += m_table->pages[j]->aliveEntries; 
         j++;
     }
     j--;
     Page* page = m_table->pages[j];
 
-    i-= page->entries.size();
+    i-= page->aliveEntries;
     int index = m_currentItem - i;
     return page->dataBase + GET_OFFSET(page->entries[index]);
 }

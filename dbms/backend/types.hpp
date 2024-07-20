@@ -5,9 +5,8 @@
 enum class OpCodes
 {
     // database related ops
-    CREATE_TABLE, INSERT, EXIT, SELECT, ERROR, 
-    DB_OP_COUNT, INNER_JOIN, FILTER,
-
+    CREATE_TABLE, INSERT, EXIT, SELECT, ERROR, FILTER,
+    DB_OP_COUNT, 
     // stack ops
     PUSH_IDENTIFIER, PUSH_STRING, PUSH_CONSTANT,
 

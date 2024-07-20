@@ -12,6 +12,7 @@ struct Page
     char* dataBase;
     char* pageCurrent; // first unused byte in page
     std::vector<EntryDescriptor> entries;
+    unsigned int aliveEntries;
 };
 
 
@@ -61,7 +62,9 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
                     const std::vector<std::string>& colNames, const std::vector<uint32_t> argOffsets,
                      char* args, unsigned int& bytesWritten, char* msgBuffer, unsigned int bufferSize);
 
-void filterTable(TableState* table, char* byteCode);
+int filterTable(TableState* table, char* byteCode, bool inverseResult = false);
+IObuffer* filterTable(DatabaseState *database, std::string& tableName,
+                    char* byteCode, char* msgBuffer, unsigned int bufferSize, bool inverseResult = false);
 TableState* selectAndMerge(DatabaseState* database, const std::vector<std::string>& tableNames , 
                             const std::vector<char*>& byteCodes, const std::vector<std::string>& colNames);
 // misc
@@ -71,5 +74,6 @@ void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
 Page* choosePage(TableState* table,  uint32_t requiredSpace);
 const ColumnType* findColumn(const TableState* table, const std::string* columnName);
 void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, std::vector< std::string> requestedColumns);
+Page* createPage();
 
 #endif

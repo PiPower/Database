@@ -56,16 +56,23 @@ insert_header:
 //------------------------------------------------------------
 SELECT;
 select specified columns from database;
-if expression_bytecode_size == 0 then WHERE clause is not used
+if byte_code_size == 0 then WHERE clause is not used
 
 byte_code_tuple:
-    byte_code_size(uint32) | bytecode (expression_bytecode_size)
+    byte_code_size(uint32) | bytecode (byte_code_size)
 
 op_code(uint16) | table_count(uint16) = k | table_name_1(null terminated string) | ... | table_name_k(null terminated string) |
 column_count(uint16) = j | column_name_1(null terminated string), ... , column_name_j(null terminated string) |
 join_byte_code_1(byte_code_tuple) | ... | join_byte_code_{k-1}(byte_code_tuple)|
 where_byte_code(byte_code_tuple)
 
+//------------------------------------------------------------
+DELETE;
+delete rows that satisfy expression. If there is no Where clause,
+delete every row.
+if byte_code_size there is no  Where clause.
+
+op_code(uint16) | table_name(null terminated string) | byte_code_size(uint32) | expression_bytecode (byte_code_size)
 //------------------------------------------------------------
 PUSH_IDENTIFIER;
 

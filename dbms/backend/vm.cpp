@@ -11,7 +11,8 @@ Operation VirtualMachine::operationTable[(unsigned int)OpCodes::DB_OP_COUNT] =
     &VirtualMachine::executeInsertInto,
     nullptr, // exit is handled in execute function
     &VirtualMachine::executeSelect,
-    &VirtualMachine::executeError
+    &VirtualMachine::executeError,
+    &VirtualMachine::executeFilter
 };
 
 
@@ -185,6 +186,23 @@ void VirtualMachine::executeError(void *)
     freeInstructionData(buffer);
 
     m_ip += strlen(m_ip) + 1;
+}
+
+void VirtualMachine::executeFilter(void *)
+{
+    string tableName = m_ip;
+    m_ip += tableName.size() + 1;
+
+    uint32_t byteCodeSize = *(uint32_t*)m_ip;
+    m_ip += sizeof(uint32_t);
+
+    char* expression = byteCodeSize > 0 ? m_ip : nullptr;
+    m_ip += byteCodeSize;
+
+    IObuffer* buffer = filterTable(databaseState, tableName, expression, m_privateMemory, LOCAL_BUFFER_SIZE, true);
+    
+    sendResponseToClient(buffer);
+    freeInstructionData(buffer);
 }
 
 void VirtualMachine::sendResponseToClient(IObuffer *data)

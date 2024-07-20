@@ -55,9 +55,9 @@ int main()
                             "(29, 'Heather', 'Gray', 39, 2360);"; 
 
     string select_query = "Select clients_id, name, surname, purchase_count, total_profit FROM Clients;";
-    
-    string select_query_2 = "Select clients_id, name, surname, purchase_count, total_profit FROM Clients Where purchase_count > 20;";
-    string delete_query = "Delete FrOm Clients Where purchase_count <= 20;";
+
+    string select_query_2 = "Select clients_id, name, surname, purchase_count, total_profit FROM Clients Where purchase_count > 30;";
+    string delete_query = "Delete FrOm clients Where purchase_count <= 30;";
     string select_query_3 = "Select clients_id, name, surname, purchase_count, total_profit FROM Clients;";
 
     Connection* conn = connectToDbms(1000, 0);
