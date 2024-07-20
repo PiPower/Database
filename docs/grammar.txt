@@ -70,7 +70,7 @@ primary:
     string | number | identifier
 
 table_specifier:
-    (identifier ".") primary
+    (identifier ".")? primary
 
 comparison_expression:
     table_specifier comparison table_specifier

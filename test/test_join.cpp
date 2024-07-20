@@ -8,6 +8,7 @@ void processQuery(string& msg, Connection* conn)
     std::vector<Table*> responses = readResponse(conn);
     for(Table* table : responses)
     {
+        printf("Query: %s\n  \n", msg.c_str());
         printTable(table);
         printf("************************\n");
         // TODO add free table
