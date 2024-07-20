@@ -10,7 +10,7 @@ enum class TokenType
     // keywords
     CREATE, TABLE, FROM, INT, CHAR, INSERT,
     INTO, VALUES, SELECT, WHERE, INNER, JOIN,
-    ON,
+    ON, DELETE,
     // separators
     L_BRACKET,  R_BRACKET, L_PARENTHESES,  R_PARENTHESES, 
     L_BRACE, R_BRACE,

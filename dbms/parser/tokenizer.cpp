@@ -84,6 +84,7 @@ void Tokenizer::keywordMapInit()
     m_keywordMap["inner"] = TokenType::INNER;
     m_keywordMap["join"] = TokenType::JOIN;
     m_keywordMap["on"] = TokenType::ON;
+    m_keywordMap["delete"] = TokenType::DELETE;
 }
 
 Token Tokenizer::parseIdentifier()

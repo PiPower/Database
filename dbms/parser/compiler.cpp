@@ -51,6 +51,9 @@ void compileStatement(CompilationState &state, AstNode *query)
     case AstNodeType::ERROR:
         compileError(state, query);
         return;
+    case AstNodeType::DELETE:
+        compileDelete(state, query);
+        return;
     default:
         break;
     };
@@ -60,6 +63,27 @@ void compileError(CompilationState &state, AstNode *query)
 {
     string* errorMsg = (string*)query->data;
     emitInstructionWithPayload(OpCodes::ERROR, state.instructionData, errorMsg->c_str(), errorMsg->size() + 1 );
+}
+
+void compileDelete(CompilationState &state, AstNode *query)
+{
+    string* tableName = (string*) query->child[0]->data;
+    emitInstructionWithPayload(OpCodes::FILTER, state.instructionData, tableName->c_str(), tableName->size() + 1);
+
+      // compile where expresison
+    auto whereIter = find_if(query->child.begin(), query->child.end(), [](const AstNode* node){
+        return node->type == AstNodeType::WHERE;
+    });
+
+    if(whereIter != query->child.end())
+    {
+        compileExpression(state, (*whereIter)->child[0]);
+    }
+    else
+    {
+        uint32_t size = 0;
+        emitPayload(state.instructionData, &size, sizeof(uint32_t));
+    }
 }
 
 void compileExpression(CompilationState &state, AstNode *query)

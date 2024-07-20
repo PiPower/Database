@@ -13,6 +13,7 @@ enum class AstNodeType
     INSERT, INSERT_ARGS, SELECT,
     SELECT_ARGS, STRING, INNER_JOIN_ON,
     TABLE_SPEC, TABLE_NAMES, WHERE,
+    DELETE, 
     // table type specifier
     MAIN_TABLE, INNER_JOIN_TABLE,
     // types identifiers
@@ -54,6 +55,7 @@ AstNode* parseStatement(ParsingState& state);
 AstNode* parseCreateTableStatement(ParsingState& state);
 AstNode* parseInsertStatement(ParsingState& state);
 AstNode* parseSelectStatement(ParsingState& state);
+AstNode* parseDeleteStatement(ParsingState& state);
 
 AstNode* parsePrimary(ParsingState& state);
 AstNode* parseParameter(ParsingState& state);
@@ -62,7 +64,7 @@ AstNode* parseIdentifier(ParsingState& state);
 AstNode* parseNumber(ParsingState& state);
 AstNode* parseTableSpecifier(ParsingState& state);
 AstNode* parseArgument(ParsingState& state);
-void parseSelectExtensions(ParsingState& state, AstNode* root);
+void parseExtensions(ParsingState& state, AstNode* root);
 // epxressions
 AstNode* parseExpression(ParsingState& state);
 AstNode* parseOp(ParsingState& state);

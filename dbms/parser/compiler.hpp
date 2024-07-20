@@ -16,7 +16,9 @@ void compileCreateTable(CompilationState& state, AstNode *query);
 void compileInsert(CompilationState& state, AstNode *query);
 void compileSelect(CompilationState& state, AstNode *query);
 void compileStatement(CompilationState& state, AstNode *query);
-void compileError(CompilationState& state, AstNode *query);
+void compileError(CompilationState& state, AstNode *query); 
+void compileDelete(CompilationState& state, AstNode *query);
+
 void compileExpression(CompilationState& state, AstNode *query);
 void compileOps(CompilationState& state, AstNode *query);
 

@@ -72,6 +72,9 @@ AstNode* parseStatement(ParsingState& state)
     case TokenType::SELECT:
         statement = parseSelectStatement(state);
         break;
+    case TokenType::DELETE:
+        statement = parseDeleteStatement(state);
+        break;
     }
 
     consumeToken(state, TokenType::SEMICOLON);
@@ -167,7 +170,17 @@ AstNode *parseSelectStatement(ParsingState &state)
     tables->child.push_back(tableName);
     root->child.push_back(tables);
 
-    parseSelectExtensions(state, root);
+    parseExtensions(state, root);
+    return root;
+}
+
+AstNode *parseDeleteStatement(ParsingState &state)
+{
+    consumeToken(state, TokenType::FROM);
+    AstNode* root = allocateNode(state);
+    root->type = AstNodeType::DELETE;
+    root->child.push_back(parseIdentifier(state));
+    parseExtensions(state, root);
     return root;
 }
 
@@ -307,7 +320,7 @@ AstNode *parseArgument(ParsingState &state)
     return argument;
 }
 
-void parseSelectExtensions(ParsingState &state, AstNode *root)
+void parseExtensions(ParsingState &state, AstNode *root)
 {
     while(true)
     {

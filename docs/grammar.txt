@@ -77,6 +77,9 @@ comparison_expression:
 
 select_statement:
     "SELECT" select_args ("," select_args)* "FROM" identifier [INNER JOIN identifier ON  comparison_expression] ["WHERE" comparison_expression]
+
+delete_statement:
+    "DELETE" "FROM" identifier ["WHERE" comparison_expression]
     
 statement:
     (create_table_statement | insert_statement | select_statement) ";"
