@@ -1,6 +1,8 @@
 #include "compiler.hpp"
 #include <algorithm>
+#include <math.h>
 #include <string.h>
+#define BYTE_SIZE 8
 using namespace std;
 
 std::vector<MachineDataTypes> inferMachineDataTypes(AstNode* args)
@@ -209,11 +211,23 @@ void compileCreateTable(CompilationState& state, AstNode *query)
     uint16_t argCount = query->child.size() - 1;
     emitPayload(state.instructionData, &argCount, sizeof(uint16_t));
 
+
+    const unsigned int byteCount = argCount/BYTE_SIZE + 1;
+    char* primKeySetters = new char[ byteCount ];
+    memset(primKeySetters, 0, byteCount);
     for(int i = 1; i < query->child.size(); i++)
     {   
         AstNode* type = query->child[i];
         serializeDataType(type, state.instructionData);
+        
+        if(type->child.size() > 1 && (type->child[1]->type == AstNodeType::PRIMARY_KEY) )
+        {
+            unsigned int byteIndex = (i-1)/BYTE_SIZE;
+            uint8_t bit_shift = (i-1)% BYTE_SIZE;
+            primKeySetters[byteIndex] |= (char)0x01 << bit_shift;
+        }
     }
+    emitPayload(state.instructionData, primKeySetters, byteCount);
 }
 
 void compileInsert(CompilationState &state, AstNode *query)

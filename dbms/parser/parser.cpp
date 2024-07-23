@@ -214,6 +214,18 @@ AstNode *parseParameter(ParsingState &state)
     AstNode* name = parseIdentifier(state);
     AstNode* type = parseDataType(state);
     type->child.push_back(name);
+    Token next = state.tokenizer.scan();
+    if(next.type == TokenType::PRIMARY )
+    {
+        consumeToken(state, TokenType::KEY);
+        AstNode* prim_key = allocateNode(state);
+        prim_key->type = AstNodeType::PRIMARY_KEY;
+        type->child.push_back(prim_key);
+    }
+    else
+    {
+        state.tokenizer.putback(next);
+    }
     return type;
 }
 

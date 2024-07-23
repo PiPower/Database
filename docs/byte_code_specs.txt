@@ -35,10 +35,11 @@ abstract_types:
 CREATE_TABLE;
 creates table;
 
-op_code(uint16) | table name(null terminated string) | arg_count ( uint16 ) | type_1, ..., type_k 
+op_code(uint16) | table name(null terminated string) | arg_count ( uint16 ) | type_1, ..., type_k  | flag_bytes
 where 
 type_j = one of abstract_types | type name(null terminated string)
-
+each bit in flag byte corresponds to one type, number of bytes is rounded up if arg_count%8 != 0.
+first bit is used by first column, second bit by second column, etc.
 //------------------------------------------------------------
 INSERT;
 insert into specifier name; 

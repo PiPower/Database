@@ -4,7 +4,7 @@ using namespace std;
 
 int main()
 {
-    string msg =  "CREATE TABLE Workers(id INT, name char(34), surname char(34), age INT, partner_name char(7) );"
+    string msg =  "CREATE TABLE Workers(id INT PRIMARY KEY, name char(34), surname char(34), age INT, partner_name char(7) );"
                  "INSERT Into Workers VALUES(\'Jan\', \'Kowalski\', 31, 1232445, \'Janina\' ), "
                  "(\'Jaroslaw\', \'Kryzewski\', 26, 32421, \'Kasia\' ),"
                  "(\'TOmasz\', \'Walczewki\', 43, 6894, \'Jola\' ),"

@@ -80,11 +80,12 @@ void Tokenizer::keywordMapInit()
     m_keywordMap["values"] = TokenType::VALUES;
     m_keywordMap["select"] = TokenType::SELECT;
     m_keywordMap["where"] = TokenType::WHERE;
-
     m_keywordMap["inner"] = TokenType::INNER;
     m_keywordMap["join"] = TokenType::JOIN;
     m_keywordMap["on"] = TokenType::ON;
     m_keywordMap["delete"] = TokenType::DELETE;
+    m_keywordMap["primary"] = TokenType::PRIMARY;
+    m_keywordMap["key"] = TokenType::KEY;
 }
 
 Token Tokenizer::parseIdentifier()

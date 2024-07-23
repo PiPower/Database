@@ -44,6 +44,7 @@ a:
         }
         if( n > 0)
         {
+            //TODO fix parser memory leak of full parse tree
             vector<AstNode*> queries = parse(buffer);
             InstructionData* byteCode = compile(queries);
             executor.execute(byteCode, client);

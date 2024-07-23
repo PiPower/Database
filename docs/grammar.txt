@@ -49,7 +49,7 @@ data_type:
     "int" | char
 
 parameter:
-    identifier data_type
+    identifier data_type [ "PRIMARY" "KEY"]
 
 create_table_statement:
     "CREATE" "TABLE"  identifier "(" parameter  ("," parameter)* ")"
@@ -82,5 +82,5 @@ delete_statement:
     "DELETE" "FROM" identifier ["WHERE" comparison_expression]
     
 statement:
-    (create_table_statement | insert_statement | select_statement) ";"
+    (create_table_statement | insert_statement | select_statement |  delete_statement) ";"
 

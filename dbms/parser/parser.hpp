@@ -13,7 +13,7 @@ enum class AstNodeType
     INSERT, INSERT_ARGS, SELECT,
     SELECT_ARGS, STRING, INNER_JOIN_ON,
     TABLE_SPEC, TABLE_NAMES, WHERE,
-    DELETE, 
+    DELETE, PRIMARY_KEY,
     // table type specifier
     MAIN_TABLE, INNER_JOIN_TABLE,
     // types identifiers
