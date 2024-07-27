@@ -6,12 +6,9 @@ using namespace std;
 
 struct Node
 {
-    union 
-    {
-        long long int m_key_int;
-        double m_key_double;
-    };
-    uint8_t balanceFactor;
+    long long int m_key_int;
+
+    char balanceFactor;
 
     char** m_rowRefrences;
     Node* m_leftChild;
@@ -93,19 +90,21 @@ int AvlTree::insert(char *key, Node** node)
         if(child == parent->m_leftChild)
         {
             parent->balanceFactor--;
+            
             // left heavy, needs rebalance
             if(parent->balanceFactor == -2)
             {
                 // left left rotation
                 if(child->balanceFactor <= 0 )
                 {
-
+                    leftLeftBalance(parent);
+                    break;
                 }
                 // left right rotation
                 else
                 {
-                   
-                }
+                   break;
+                }   
             }
         }
         else
@@ -117,7 +116,7 @@ int AvlTree::insert(char *key, Node** node)
                 // right left rotation
                 if(child->balanceFactor < 0 )
                 {
-
+                    break;
                 }
                 // right right rotation
                 else
@@ -138,36 +137,65 @@ int AvlTree::insert(char *key, Node** node)
 
 int AvlTree::rightRightBalance(Node* heavyNode)
 {
-    Node* holder = heavyNode->m_rightChild->m_leftChild;
     Node* rightChild = heavyNode->m_rightChild;
-    if(!heavyNode->m_parent)
+    Node* holder = rightChild->m_leftChild;
+    //first swap
+    rightChild->m_leftChild = heavyNode;
+    rightChild->m_parent = heavyNode->m_parent;
+    if(heavyNode->m_parent)
     {
-        //if node has no parent that means we need to update root
+        //update parent pointer
+        Node* parent = heavyNode->m_parent;
+        if(parent->m_leftChild == heavyNode) {parent->m_leftChild = rightChild;} 
+        else{parent->m_rightChild = rightChild;}
+    }
+    else
+    {
+        // no parent pointer means we have root
         m_root = rightChild;
     }
-
-    rightChild->m_leftChild = heavyNode;
-    if(heavyNode)
-    {
-        heavyNode->m_parent = rightChild;
-    }
-
+    heavyNode->m_parent = rightChild;
+    //second swap
     heavyNode->m_rightChild = holder;
     if(holder)
     {
         holder->m_parent = heavyNode;
     }
 
-    if(rightChild->balanceFactor == 0)
-    {
-        rightChild->balanceFactor = -1;
-        heavyNode->balanceFactor = 1;
-    }
-    else
-    {
-        rightChild->balanceFactor = 0;
-        heavyNode->balanceFactor = 0;
-    }
+    rightChild->balanceFactor = 0;
+    heavyNode->balanceFactor = 0;
+  
     return 0;
 }
 
+int AvlTree::leftLeftBalance(Node *heavyNode)
+{
+    Node* leftChild = heavyNode->m_leftChild;
+    Node* holder = leftChild->m_rightChild;
+    // first swap
+    leftChild->m_rightChild = heavyNode;
+    leftChild->m_parent = heavyNode->m_parent;
+    if(heavyNode->m_parent)
+    {
+        //update parent pointer
+        Node* parent = heavyNode->m_parent;
+        if(parent->m_leftChild == heavyNode) {parent->m_leftChild = leftChild;} 
+        else{parent->m_rightChild = leftChild;}
+    }
+    else
+    {
+        // no parent pointer means we have root
+        m_root = leftChild;
+    }
+    heavyNode->m_parent = leftChild;
+    // second swap
+    heavyNode->m_leftChild = holder;
+    if(holder)
+    {
+        holder->m_parent = heavyNode;
+    }
+
+    leftChild->balanceFactor = 0;
+    heavyNode->balanceFactor = 0;
+    return 0;
+}
