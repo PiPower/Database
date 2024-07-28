@@ -15,8 +15,8 @@ public:
     int addRefrenceToRow(char* data, char* key);
 private:
     int insert(char* key, Node** node);
-    int rightRightBalance(Node* heavyNode);
-    int leftLeftBalance(Node* heavyNode);
+    int rightRightBalance(Node* x);
+    int leftLeftBalance(Node* x);
 private: 
     MachineDataTypes m_dataType;
     unsigned int m_maxDataSize;

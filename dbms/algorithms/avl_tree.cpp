@@ -135,67 +135,67 @@ int AvlTree::insert(char *key, Node** node)
     return 0;
 }
 
-int AvlTree::rightRightBalance(Node* heavyNode)
+int AvlTree::rightRightBalance(Node* x)
 {
-    Node* rightChild = heavyNode->m_rightChild;
-    Node* holder = rightChild->m_leftChild;
+    Node* z = x->m_rightChild;
+    Node* holder =z->m_leftChild;
     //first swap
-    rightChild->m_leftChild = heavyNode;
-    rightChild->m_parent = heavyNode->m_parent;
-    if(heavyNode->m_parent)
+   z->m_leftChild = x;
+   z->m_parent = x->m_parent;
+    if(x->m_parent)
     {
         //update parent pointer
-        Node* parent = heavyNode->m_parent;
-        if(parent->m_leftChild == heavyNode) {parent->m_leftChild = rightChild;} 
-        else{parent->m_rightChild = rightChild;}
+        Node* parent = x->m_parent;
+        if(parent->m_leftChild == x) {parent->m_leftChild =z;} 
+        else{parent->m_rightChild =z;}
     }
     else
     {
         // no parent pointer means we have root
-        m_root = rightChild;
+        m_root =z;
     }
-    heavyNode->m_parent = rightChild;
+    x->m_parent =z;
     //second swap
-    heavyNode->m_rightChild = holder;
+    x->m_rightChild = holder;
     if(holder)
     {
-        holder->m_parent = heavyNode;
+        holder->m_parent = x;
     }
 
-    rightChild->balanceFactor = 0;
-    heavyNode->balanceFactor = 0;
+    z->balanceFactor = 0;
+    x->balanceFactor = 0;
   
     return 0;
 }
 
-int AvlTree::leftLeftBalance(Node *heavyNode)
+int AvlTree::leftLeftBalance(Node *x)
 {
-    Node* leftChild = heavyNode->m_leftChild;
-    Node* holder = leftChild->m_rightChild;
+    Node* z = x->m_leftChild;
+    Node* holder = z->m_rightChild;
     // first swap
-    leftChild->m_rightChild = heavyNode;
-    leftChild->m_parent = heavyNode->m_parent;
-    if(heavyNode->m_parent)
+    z->m_rightChild = x;
+    z->m_parent = x->m_parent;
+    if(x->m_parent)
     {
         //update parent pointer
-        Node* parent = heavyNode->m_parent;
-        if(parent->m_leftChild == heavyNode) {parent->m_leftChild = leftChild;} 
-        else{parent->m_rightChild = leftChild;}
+        Node* parent = x->m_parent;
+        if(parent->m_leftChild == x) {parent->m_leftChild =z;} 
+        else{parent->m_rightChild =z;}
     }
     else
     {
         // no parent pointer means we have root
-        m_root = leftChild;
+        m_root =z;
     }
-    heavyNode->m_parent = leftChild;
+    x->m_parent =z;
     // second swap
-    heavyNode->m_leftChild = holder;
+    x->m_leftChild = holder;
     if(holder)
     {
-        holder->m_parent = heavyNode;
+        holder->m_parent = x;
     }
 
-    leftChild->balanceFactor = 0;
-    heavyNode->balanceFactor = 0;
+   z->balanceFactor = 0;
+    x->balanceFactor = 0;
     return 0;
 }
