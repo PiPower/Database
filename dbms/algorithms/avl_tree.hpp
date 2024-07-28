@@ -17,6 +17,7 @@ private:
     int insert(char* key, Node** node);
     int rightRightBalance(Node* x);
     int leftLeftBalance(Node* x);
+    int rightLeftBalance(Node* x);
 private: 
     MachineDataTypes m_dataType;
     unsigned int m_maxDataSize;

@@ -89,6 +89,7 @@ int AvlTree::insert(char *key, Node** node)
     {
         if(child == parent->m_leftChild)
         {
+
             parent->balanceFactor--;
             
             // left heavy, needs rebalance
@@ -106,6 +107,13 @@ int AvlTree::insert(char *key, Node** node)
                    break;
                 }   
             }
+
+            if(parent->balanceFactor == 0)
+            {
+                // this means that added node rebalanced parent tree, 
+                // so no change in height for upstream node
+                break;
+            }
         }
         else
         {
@@ -116,6 +124,7 @@ int AvlTree::insert(char *key, Node** node)
                 // right left rotation
                 if(child->balanceFactor < 0 )
                 {
+                    rightLeftBalance(parent);
                     break;
                 }
                 // right right rotation
@@ -124,6 +133,13 @@ int AvlTree::insert(char *key, Node** node)
                     rightRightBalance(parent);
                     break;
                 }
+            }
+
+            if(parent->balanceFactor == 0)
+            {
+                // this means that added node rebalanced parent tree, 
+                // so no change in height for upstream nodes
+                break;
             }
         }
 
@@ -140,8 +156,8 @@ int AvlTree::rightRightBalance(Node* x)
     Node* z = x->m_rightChild;
     Node* holder =z->m_leftChild;
     //first swap
-   z->m_leftChild = x;
-   z->m_parent = x->m_parent;
+    z->m_leftChild = x;
+    z->m_parent = x->m_parent;
     if(x->m_parent)
     {
         //update parent pointer
@@ -155,7 +171,7 @@ int AvlTree::rightRightBalance(Node* x)
         m_root =z;
     }
     x->m_parent =z;
-    //second swap
+    // connecting right child
     x->m_rightChild = holder;
     if(holder)
     {
@@ -188,14 +204,70 @@ int AvlTree::leftLeftBalance(Node *x)
         m_root =z;
     }
     x->m_parent =z;
-    // second swap
+    // connecting left child
     x->m_leftChild = holder;
     if(holder)
     {
         holder->m_parent = x;
     }
 
-   z->balanceFactor = 0;
+    z->balanceFactor = 0;
     x->balanceFactor = 0;
+    return 0;
+}
+
+int AvlTree::rightLeftBalance(Node *x)
+{
+    Node* z = x->m_rightChild;
+    Node* y = z->m_leftChild;
+
+    //first swap 
+    Node* holder_y = y->m_rightChild;
+    y->m_rightChild = z;
+    y->m_parent = z->m_parent;
+    z->m_parent = y;
+    z->m_leftChild  = holder_y;
+    if(holder_y)
+    {
+        holder_y->m_parent = z;
+    }
+    // second swap
+    holder_y = y->m_leftChild;
+    y->m_leftChild = x;
+    y->m_parent = x->m_parent;
+    if(x->m_parent)
+    {
+        //update parent pointer
+        Node* parent = x->m_parent;
+        if(parent->m_leftChild == x) {parent->m_leftChild = y;} 
+        else{parent->m_rightChild = y;}
+    }
+    else
+    {
+        m_root = y;
+    }
+    x->m_parent = y;
+    x->m_rightChild = holder_y;
+    if(holder_y)
+    {
+        holder_y->m_parent = x;
+    }
+
+    if(y->balanceFactor == 0)
+    {
+        z->balanceFactor = 0;
+        x->balanceFactor = 0;
+    }
+    else if(y->balanceFactor > 0 )
+    {
+        z->balanceFactor = 0;
+        x->balanceFactor = -1;
+    }
+    else if(y->balanceFactor < 0 )
+    {
+        z->balanceFactor = 1;
+        x->balanceFactor = 0;
+    }
+    y->balanceFactor = 0;
     return 0;
 }
