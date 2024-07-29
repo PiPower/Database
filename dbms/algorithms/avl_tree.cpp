@@ -8,7 +8,7 @@ struct Node
 {
     long long int m_key_int;
 
-    char balanceFactor;
+    char m_balanceFactor;
 
     char** m_rowRefrences;
     Node* m_leftChild;
@@ -62,7 +62,7 @@ int AvlTree::insert(char *key, Node** node)
             (*node)->m_key_int = *(int*)key;
             (*node)->m_rowRefrences = nullptr;
             (*node)->m_parent = parent;
-            (*node)->balanceFactor = 0;
+            (*node)->m_balanceFactor = 0;
             break;
         }
 
@@ -90,13 +90,13 @@ int AvlTree::insert(char *key, Node** node)
         if(child == parent->m_leftChild)
         {
 
-            parent->balanceFactor--;
+            parent->m_balanceFactor--;
             
             // left heavy, needs rebalance
-            if(parent->balanceFactor == -2)
+            if(parent->m_balanceFactor == -2)
             {
                 // left left rotation
-                if(child->balanceFactor <= 0 )
+                if(child->m_balanceFactor <= 0 )
                 {
                     leftLeftBalance(parent);
                     break;
@@ -104,25 +104,26 @@ int AvlTree::insert(char *key, Node** node)
                 // left right rotation
                 else
                 {
-                   break;
+                    leftRightBalance(parent);
+                    break;
                 }   
             }
 
-            if(parent->balanceFactor == 0)
+            if(parent->m_balanceFactor == 0)
             {
                 // this means that added node rebalanced parent tree, 
-                // so no change in height for upstream node
+                // so no change in height for upstream nodes
                 break;
             }
         }
         else
         {
-            parent->balanceFactor++;
+            parent->m_balanceFactor++;
             // right heavy, needs rebalance
-            if(parent->balanceFactor == 2)
+            if(parent->m_balanceFactor == 2)
             {
                 // right left rotation
-                if(child->balanceFactor < 0 )
+                if(child->m_balanceFactor < 0 )
                 {
                     rightLeftBalance(parent);
                     break;
@@ -135,7 +136,7 @@ int AvlTree::insert(char *key, Node** node)
                 }
             }
 
-            if(parent->balanceFactor == 0)
+            if(parent->m_balanceFactor == 0)
             {
                 // this means that added node rebalanced parent tree, 
                 // so no change in height for upstream nodes
@@ -178,8 +179,8 @@ int AvlTree::rightRightBalance(Node* x)
         holder->m_parent = x;
     }
 
-    z->balanceFactor = 0;
-    x->balanceFactor = 0;
+    z->m_balanceFactor = 0;
+    x->m_balanceFactor = 0;
   
     return 0;
 }
@@ -211,8 +212,8 @@ int AvlTree::leftLeftBalance(Node *x)
         holder->m_parent = x;
     }
 
-    z->balanceFactor = 0;
-    x->balanceFactor = 0;
+    z->m_balanceFactor = 0;
+    x->m_balanceFactor = 0;
     return 0;
 }
 
@@ -252,22 +253,80 @@ int AvlTree::rightLeftBalance(Node *x)
     {
         holder_y->m_parent = x;
     }
+    // find balance factors
+    if(y->m_balanceFactor == 0)
+    {
+        z->m_balanceFactor = 0;
+        x->m_balanceFactor = 0;
+    }
+    else if(y->m_balanceFactor > 0 )
+    {
+        z->m_balanceFactor = 0;
+        x->m_balanceFactor = -1;
+    }
+    else
+    {
+        z->m_balanceFactor = 1;
+        x->m_balanceFactor = 0;
+    }
+    y->m_balanceFactor = 0;
+    return 0;
+}
 
-    if(y->balanceFactor == 0)
+int AvlTree::leftRightBalance(Node *x)
+{
+    Node* z = x->m_leftChild;
+    Node* y = z->m_rightChild;
+
+    //first swap
+    Node* holder_y = y->m_leftChild;
+
+    y->m_leftChild = z;
+    y->m_parent = z->m_parent;
+    z->m_parent = y;
+    z->m_rightChild = holder_y;
+    if(holder_y)
     {
-        z->balanceFactor = 0;
-        x->balanceFactor = 0;
+        holder_y->m_parent = z;
     }
-    else if(y->balanceFactor > 0 )
+    // second swap
+    holder_y = y->m_rightChild;
+
+    y->m_rightChild = x;
+    y->m_parent = x->m_parent;
+    if(x->m_parent)
     {
-        z->balanceFactor = 0;
-        x->balanceFactor = -1;
+        //update parent pointer
+        Node* parent = x->m_parent;
+        if(parent->m_leftChild == x) {parent->m_leftChild = y;} 
+        else{parent->m_rightChild = y;}
     }
-    else if(y->balanceFactor < 0 )
+    else
     {
-        z->balanceFactor = 1;
-        x->balanceFactor = 0;
+        m_root = y;
     }
-    y->balanceFactor = 0;
+    x->m_parent = y;
+    x->m_leftChild = holder_y;
+    if(holder_y)
+    {
+        holder_y->m_parent = x;
+    }
+    // find balance factors
+    if(y->m_balanceFactor == 0)
+    {
+        z->m_balanceFactor = 0;
+        x->m_balanceFactor = 0;
+    }
+    else if(y->m_balanceFactor > 0 )
+    {
+        z->m_balanceFactor = -1;
+        x->m_balanceFactor = 0;
+    }
+    else
+    {
+        z->m_balanceFactor = 1;
+        x->m_balanceFactor = 1;
+    }
+    y->m_balanceFactor = 0;
     return 0;
 }
