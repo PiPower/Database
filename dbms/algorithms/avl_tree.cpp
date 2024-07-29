@@ -1,20 +1,8 @@
 #include "avl_tree.hpp"
 #include <math.h>
 #include <utility>
-
+#include <queue>
 using namespace std;
-
-struct Node
-{
-    long long int m_key_int;
-
-    char m_balanceFactor;
-
-    char** m_rowRefrences;
-    Node* m_leftChild;
-    Node* m_rightChild;
-    Node* m_parent;
-};
 
 AvlTree::AvlTree(MachineDataTypes type, unsigned int maxDataSize)
 : m_dataType(type), m_maxDataSize(maxDataSize), m_root(nullptr)
@@ -23,10 +11,12 @@ AvlTree::AvlTree(MachineDataTypes type, unsigned int maxDataSize)
 
 //inserts value into tree
 //return true if value has been inserted
+//if specified value exists inside tree 
+//dont insert it again and return false
 bool AvlTree::insertValue(char *key)
 {
     int n = insert(key, &m_root);
-    if(n)
+    if(!n)
     {
         return false;
     }
@@ -39,16 +29,37 @@ bool AvlTree::find(char *key)
     return false;
 }
 
-//finds node whose value is equal to key, then adds
-//refrence to the record and return 0
-//if there is no value equal to key function return -1 and
-//that not add refrence to record
+//TODO
 int AvlTree::addRefrenceToRow(char *data, char *key)
 {
     return 0;
 }
 
-//return 1 if values is found, otherwise return 0 
+void AvlTree::clear()
+{
+    queue<Node*> nodes;
+    nodes.push(m_root);
+    while (nodes.size() > 0 )
+    {
+        Node* current = nodes.front();
+        nodes.pop();
+
+        if(current->m_leftChild )
+        {
+            nodes.push(current->m_leftChild);
+        }
+        if(current->m_rightChild )
+        {
+            nodes.push(current->m_rightChild);
+        }
+
+        delete current;
+    }
+    
+    m_root = nullptr;
+}
+
+//return 0 if values is found, otherwise return 1
 int AvlTree::insert(char *key, Node** node)
 {
     Node* parent = nullptr;
@@ -69,7 +80,7 @@ int AvlTree::insert(char *key, Node** node)
         int comp = (*node)->m_key_int - *(int*)key;
         if(comp == 0 )
         {
-            return 1;
+            return 0;
         }
 
         parent = *node;
@@ -149,7 +160,7 @@ int AvlTree::insert(char *key, Node** node)
         parent = child->m_parent;
     }
     
-    return 0;
+    return 1;
 }
 
 int AvlTree::rightRightBalance(Node* x)
@@ -169,7 +180,7 @@ int AvlTree::rightRightBalance(Node* x)
     else
     {
         // no parent pointer means we have root
-        m_root =z;
+        m_root = z;
     }
     x->m_parent =z;
     // connecting right child
