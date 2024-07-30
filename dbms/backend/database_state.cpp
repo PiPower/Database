@@ -19,14 +19,14 @@ IObuffer* createTable(DatabaseState* database, string&& tableName, vector<Column
         updateStringOutputBuffer(buffer, true, errMsg);
         return buffer;
     }
-    database->tables[move(tableName)] = createTable( columns, tableName );
+    database->tables[move(tableName)] = createTable( columns, tableName, false );
 
     static const char* const successMSG = "Table has been created succesfully";
     updateStringOutputBuffer(buffer, false, successMSG);
     return buffer;
 }
 
-TableState *createTable(vector<ColumnType>& columns,const string& tableName)
+TableState *createTable(vector<ColumnType>& columns,const string& tableName, bool isSubTable)
 {
     TableState* table = new TableState();
     table->columns = columns;
@@ -38,6 +38,12 @@ TableState *createTable(vector<ColumnType>& columns,const string& tableName)
     {
         col.offset = table->maxEntrySize;
         table->maxEntrySize += col.size;
+        if(isSubTable)
+        {
+            // if table is mean to be subtable that means its used within system
+            // so it does not need its own avl tree 
+            col.tree = nullptr;
+        }
     }
 
     Page* page= createPage();
@@ -176,7 +182,7 @@ TableState* selectAndMerge(DatabaseState *database, const vector<string>& tableN
 
     
     TableState* outTable = createTable(columns, "" );
-    //preper entry data for executeComparison and copy actual data
+    //prepare entry data for executeComparison and copy actual data
     vector<EntryBase> entries;
     unordered_map<string, char*> entryMap;
     for(int i = 0; i < cursors.size(); i++)

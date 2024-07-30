@@ -54,7 +54,7 @@ IObuffer* selectFromTable(DatabaseState* database, std::string&& tableName, std:
 
 //general ops
 IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType>&& columns);
-TableState* createTable(std::vector<ColumnType>& columns, const std::string& tableName);
+TableState* createTable(std::vector<ColumnType>& columns, const std::string& tableName, bool isSubTable = true);
 TableState* createSubtable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames);
 void freeTable(TableState* table);
 void freePage(Page* page);
