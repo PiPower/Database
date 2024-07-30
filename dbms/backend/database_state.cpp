@@ -353,7 +353,7 @@ IObuffer*  filterTable(DatabaseState *database, std::string& tableName,
 
 void freePage(Page* page)
 {
-    delete page->dataBase;
+    delete[] page->dataBase;
     delete page;
 }
 
