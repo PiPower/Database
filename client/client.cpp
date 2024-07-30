@@ -65,8 +65,11 @@ void sendQuery(Connection* connection, const char *query)
 std::vector<Table*> readResponse(Connection *connection)
 {
     int buffSize = 10000;
-    int size = 0;
+    uint8_t tableCount = 0;
+    vector<Table*> tables;
     char* buffer = new char[buffSize];
+fetchTables:
+    int size = 0;
     while (true)
     {
         int n = recv(connection->sockFd, buffer + size, buffSize, 0);
@@ -89,8 +92,16 @@ std::vector<Table*> readResponse(Connection *connection)
             buffer = temp;
         }
     }
-    vector<Table*> tables;
     unsigned int readDataSize = 0;
+    if(tableCount == 0)
+    {
+        //if tableCount == 0 tab means we need to fetch header
+        tableCount = *(uint8_t*)buffer;
+        buffer++;
+        readDataSize++;
+    }
+
+
     while (readDataSize < size)
     {
         unsigned int offset = 0;
@@ -98,6 +109,12 @@ std::vector<Table*> readResponse(Connection *connection)
         readDataSize += offset;
     }
     
+    if(tables.size() < tableCount)
+    {
+        //if number of tables is smaller than specified by server
+        //we need to wait for additional responses
+        goto fetchTables;
+    }
     return tables;
 }
 

@@ -11,6 +11,7 @@
 using namespace std;
 
 void errorCheck(int retVal, int fd = 2, const char* additionalMessage = nullptr);
+void sendHandshake(int clientFd, uint8_t tableCount);
 int main()
 {
     VirtualMachine executor;
@@ -28,7 +29,13 @@ int main()
     errorCheck(bind( sock, (sockaddr*) &servaddr, sizeof(sockaddr_in )) );
     errorCheck( listen(sock, 10) );
 
-    // currently serves only one connection dbms-client
+    /*
+    currently serves only one connection dbms-client
+    Communication with the client consists of 2 main parts
+    The first message from the server is the number of response 
+    tables that client can expect. It is followed by the tables
+    where each counts as a one.
+    */
     sockaddr_in clientAddr;
     socklen_t len;
 a:
@@ -47,6 +54,7 @@ a:
             //TODO fix parser memory leak of full parse tree
             vector<AstNode*> queries = parse(buffer);
             InstructionData* byteCode = compile(queries);
+            sendHandshake(client, queries.size());
             executor.execute(byteCode, client);
         }
     }  
@@ -62,4 +70,9 @@ void errorCheck(int retVal, int fd, const char* additionalMessage)
     }
     dprintf(fd, "Encountered error: %s\n", strerror(errno));
     exit(-1);
+}
+
+void sendHandshake(int clientFd, uint8_t tableCount)
+{
+    send(clientFd, &tableCount, 1, 0);
 }
