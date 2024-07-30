@@ -15,7 +15,7 @@ public:
     OpCodes fetchInstruction();
     uint16_t fetchUint16();
     uint16_t fetchUint32();
-    ColumnType fetchDataType();
+    ColumnType fetchColumnType();
 private:
     // ops
     void executeCreateDatase(void*);

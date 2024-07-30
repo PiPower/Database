@@ -103,7 +103,7 @@ bool checkIfIsBinaryTree(array<int, ELEMENT_COUNT> &arr, AvlTree *tree)
             entries.push({currentNode->m_rightChild, entry.upperBound, (int)currentNode->m_key_int});
         }
     }
-    
+    // check if values are placed correctly
     stack<Node*> nodes;
     array<int, ELEMENT_COUNT> buffer;
     nodes.push(tree->m_root);

@@ -65,12 +65,12 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
     unsigned int bytecodeSize;
     unsigned int corretValues = 0;
     unsigned int numberOfArgs = static_cast<unsigned int>( argOffsets.size() );
-
     for(size_t i=0; i <numberOfArgs; i++)
     {
         char* currentPtr = args + argOffsets[i];
         currScratchPad = scratchPad;
         bool typeErrorFlag = false;
+        bool keyErrorFlag = false;
         for(size_t j = 0; j < typeTable.size(); j++)
         {
             MachineDataTypes currentType = (MachineDataTypes)(*(uint16_t*)currentPtr);
@@ -79,6 +79,11 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
             {
                 typeErrorFlag = true;
             }
+            if(typeTable[j].tree != nullptr && typeTable[j].tree->find(currentPtr) )
+            {
+                keyErrorFlag = true;
+            }
+
             uint32_t offset = copyMachineDataType(currScratchPad, typeTable[j], currentPtr, currentType);
             currentPtr += offset;
             currScratchPad +=  typeTable[j].abstractType == DataTypes::CHAR ?  typeTable[j].size : offset;
@@ -87,9 +92,9 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
 
         bytecodeSize = currentPtr -  args - argOffsets[i];
         bytesWritten += bytecodeSize;
-        if(!typeErrorFlag)
+        if(!typeErrorFlag && !keyErrorFlag)
         {
-            insertIntoPage(tableIter->second, scratchPad, currScratchPad - scratchPad);
+            insertIntoPage(tableIter->second, scratchPad, currScratchPad - scratchPad, true);
             corretValues++;
         }
     }
@@ -159,7 +164,7 @@ TableState* selectAndMerge(DatabaseState *database, const vector<string>& tableN
         }
     }
 
-    // create information about used column in new table, and store parent tables of those columns
+    // create information about used by column in new table, and store parent tables of those columns
     auto colsAndTableNames = fetchColumnsFromCursors(cursors, colNames);
     vector<ColumnType> columns = move(colsAndTableNames.first);
     vector<string> columnParentTables = move(colsAndTableNames.second);
@@ -239,7 +244,7 @@ TableState* selectAndMerge(DatabaseState *database, const vector<string>& tableN
 
 // output of function is binary data in form 
 // header + body
-// header =  item_count(uint32_t)  |col_count(uint16_t) | col_desc_1, ... , col_desc_col_count 
+// header = item_count(uint32_t)  |col_count(uint16_t) | col_desc_1, ... , col_desc_col_count 
 // col_desc_1 = machine_type(uint16_t) | max_col_size(uint16) | col_name (null terminated string)
 // body is just sequence of bytes described by header in the order following col_desc
 IObuffer* selectFromTable(DatabaseState *database, string &&tableName, vector<string> &&colNames)
@@ -439,7 +444,7 @@ uint32_t copyMachineDataType(char *scratchpad, ColumnType& columnDesc, char *sou
     return copySize;
 }
 
-void insertIntoPage(TableState *table, char *data, uint32_t dataSize)
+void insertIntoPage(TableState *table, char *data, uint32_t dataSize, bool insertIntoTrees)
 {
     Page* chosenPage = choosePage(table, dataSize);
     uint16_t offset = chosenPage->pageCurrent - chosenPage->dataBase ;
@@ -451,6 +456,22 @@ void insertIntoPage(TableState *table, char *data, uint32_t dataSize)
     memcpy(chosenPage->pageCurrent, data, dataSize);
     chosenPage->pageCurrent += dataSize;
     table->itemCount++;
+
+    if(!insertIntoTrees)
+    {
+        return;
+    }
+    
+    for(int i=0; i < table->columns.size(); i++)
+    {
+        ColumnType* col = &table->columns[i];
+
+        if(col->tree != nullptr)
+        {
+            col->tree->insertValue( chosenPage->dataBase + GET_OFFSET(entryDesc) + col->offset);
+        }
+    }
+
 }
 
 Page *choosePage(TableState *table, uint32_t requiredSpace)

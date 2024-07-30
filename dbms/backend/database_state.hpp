@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include "entry.hpp"
-
+#include "../algorithms/avl_tree.hpp"
 struct Page
 {
     char* dataBase;
@@ -15,7 +15,7 @@ struct Page
     unsigned int aliveEntries;
 };
 
-
+typedef uint8_t ColumnFlags;
 struct ColumnType
 {
     MachineDataTypes machineType;
@@ -23,6 +23,7 @@ struct ColumnType
     uint16_t size;
     uint16_t offset;
     std::string columnName;
+    AvlTree* tree;
 };
 
 struct TableFags
@@ -70,7 +71,7 @@ TableState* selectAndMerge(DatabaseState* database, const std::vector<std::strin
 // misc
 void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg);
 uint32_t copyMachineDataType(char* scratchpad, ColumnType& columnDesc, char* sourceData, MachineDataTypes currentType);
-void insertIntoPage(TableState* table, char* data, uint32_t dataSize);
+void insertIntoPage(TableState* table, char* data, uint32_t dataSize, bool insertIntoTrees = false);
 Page* choosePage(TableState* table,  uint32_t requiredSpace);
 const ColumnType* findColumn(const TableState* table, const std::string* columnName);
 void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, std::vector< std::string> requestedColumns);

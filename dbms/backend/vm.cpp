@@ -61,7 +61,7 @@ uint16_t VirtualMachine::fetchUint32()
     return *(uint32_t*)(m_ip - sizeof(uint32_t));
 }
 
-ColumnType VirtualMachine::fetchDataType()
+ColumnType VirtualMachine::fetchColumnType()
 {
     DataTypes type = (DataTypes)fetchUint16();
     switch (type)
@@ -89,11 +89,25 @@ void VirtualMachine::executeCreateDatase(void*)
     vector<ColumnType> columnTypes;
     for(int i =0; i < argCount; i++)
     {
-        ColumnType type = fetchDataType();
+        ColumnType type = fetchColumnType();
         type.columnName =  m_ip;
+        type.tree = nullptr;
         m_ip += type.columnName.size() + 1;
         columnTypes.push_back(type);
     }
+
+    unsigned int settersCount = columnTypes.size()/8 + 1;
+
+    for(int i =0; i < argCount; i++)
+    {
+        unsigned int byteIndex = i/8;
+        uint8_t bit_shift = i% 8;
+        if( m_ip[byteIndex] & ( 1 << bit_shift)  )
+        {
+            columnTypes[i].tree = new AvlTree( columnTypes[i].machineType, columnTypes[i].size);
+        }
+    }
+    m_ip += settersCount;
 
     IObuffer* buffer = createTable(databaseState, move(tableName), move(columnTypes) );
     sendResponseToClient(buffer);

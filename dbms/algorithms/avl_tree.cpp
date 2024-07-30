@@ -26,6 +26,25 @@ bool AvlTree::insertValue(char *key)
 //return true if value is inside tree
 bool AvlTree::find(char *key)
 {
+    Node* currentNode = m_root;
+    while(currentNode)
+    {
+        int comp = currentNode->m_key_int - *(int*)key;
+        if(comp == 0 )
+        {
+            return true;
+        }
+
+        if(comp > 0)
+        {
+            currentNode = currentNode->m_leftChild;
+        }
+        else
+        {
+            currentNode = currentNode->m_rightChild;
+        }
+    }
+
     return false;
 }
 
