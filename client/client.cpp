@@ -32,12 +32,21 @@ struct Table
 };
 
 
+int guardedMemoryFetch(void* dest, void* src, unsigned int readSize, void* upperMemoryBound)
+{
+    if((char*)src + readSize  > upperMemoryBound)
+    {
+        return 1;
+    }
+    memcpy(dest, src, readSize);
+    return 0;
+}
+
 static Table* readTable(char* buffer, const unsigned int totalSize,  unsigned int& readSize);
 static void errorCheck(int retVal, int fd = 2, const char* additionalMessage = nullptr);
 
 Connection* connectToDbms(time_t seconds, suseconds_t microseconds)
 {
-
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     errorCheck(sock);
 
@@ -65,18 +74,19 @@ void sendQuery(Connection* connection, const char *query)
 std::vector<Table*> readResponse(Connection *connection)
 {
     int buffSize = 10000;
+    int size = 0;
     uint8_t tableCount = 0;
+    unsigned int readDataSize = 0;
     vector<Table*> tables;
     char* buffer = new char[buffSize];
 fetchTables:
-    int size = 0;
     while (true)
     {
-        int n = recv(connection->sockFd, buffer + size, buffSize, 0);
+        int n = recv(connection->sockFd, buffer + size, buffSize - size, 0);
 
         if( n < 1 )
         {
-            break;
+            return tables;
         }
         size += n;
         if(size < buffSize)
@@ -92,12 +102,10 @@ fetchTables:
             buffer = temp;
         }
     }
-    unsigned int readDataSize = 0;
     if(tableCount == 0)
     {
         //if tableCount == 0 tab means we need to fetch header
         tableCount = *(uint8_t*)buffer;
-        buffer++;
         readDataSize++;
     }
 
@@ -105,7 +113,13 @@ fetchTables:
     while (readDataSize < size)
     {
         unsigned int offset = 0;
-        tables.push_back( readTable(buffer + readDataSize, size - readDataSize,offset) );
+        Table* table = readTable(buffer + readDataSize, size - readDataSize, offset);
+        if(!table)
+        {
+            // if nullptr is returned that means not full table is inside of memory
+            break;
+        }
+        tables.push_back( table );
         readDataSize += offset;
     }
     
@@ -165,18 +179,60 @@ static Table* readTable(char* buffer, const unsigned int totalSize, unsigned int
     Table* table = new Table();
     char* bufferCurrent = buffer;
 
-    uint32_t itemCount = *(uint32_t*) bufferCurrent;
+    uint32_t itemCount;
+    if( guardedMemoryFetch(&itemCount, bufferCurrent, sizeof(uint32_t), buffer + totalSize ))
+    {   
+        printf("\nLOCK itemCount\n");
+        fflush(stdout);
+        readSize = 0;
+        delete table;
+        return nullptr;
+    }
     bufferCurrent += sizeof(uint32_t);
-    uint16_t colCount =  *(uint16_t*) bufferCurrent;
+
+    uint16_t colCount;
+    if( guardedMemoryFetch(&colCount, bufferCurrent, sizeof(uint16_t), buffer + totalSize ))
+    {   
+        printf("\nLOCK COLCOUNT\n");
+         fflush(stdout);
+        readSize = 0;
+        delete table;
+        return nullptr;
+    }
     bufferCurrent+= sizeof(uint16_t);
 
     for(int i=0; i < colCount; i++)
-    {
-        uint16_t colType = *(uint16_t*) bufferCurrent;
+    {   
+        uint16_t colType;
+        if( guardedMemoryFetch(&colType, bufferCurrent, sizeof(uint16_t), buffer + totalSize ))
+        {   
+            printf("\nLOCK COLTYPE\n");
+             fflush(stdout);
+            readSize = 0;
+            delete table;
+            return nullptr;
+        }
         bufferCurrent += sizeof(uint16_t);
-        uint16_t maxSize = *(uint16_t*) bufferCurrent;
+        uint16_t maxSize;
+        if( guardedMemoryFetch(&maxSize, bufferCurrent, sizeof(uint16_t), buffer + totalSize ))
+        {   
+            printf("\nLOCK MAXSIZE\n");
+             fflush(stdout);
+            readSize = 0;
+            delete table;
+            return nullptr;
+        }
         bufferCurrent += sizeof(uint16_t);
         char* colName = bufferCurrent;
+
+        if( strlen(colName) + 1 + bufferCurrent - buffer > totalSize)
+        {   
+            printf("\nLOCK COLNAME\n");
+             fflush(stdout);
+            readSize = 0;
+            delete table;
+            return nullptr;
+        }
         bufferCurrent += strlen(bufferCurrent) + 1;
 
         ColumnDescriptor desc;
@@ -203,7 +259,20 @@ static Table* readTable(char* buffer, const unsigned int totalSize, unsigned int
             {
             case MachineDataTypes::INT32:
             {
-                memcpy(currentColumn + item * table->columnDescriptors[i].maxSize,  bufferCurrent, sizeof(int));
+                if(guardedMemoryFetch( currentColumn + item * table->columnDescriptors[i].maxSize,  bufferCurrent, sizeof(int),  buffer + totalSize ))
+                {
+                    //table is not fully downloaded, we need to try to load it later
+                    for(int i= 0; i < colCount; i++)
+                    {
+                        delete[] table->columnTable[i];
+                    }
+                    printf("\nLOCK INT\n");
+                     fflush(stdout);
+                    delete[] table->columnTable;
+                    delete table;
+                    readSize = 0;
+                    return nullptr;
+                }
                 bufferCurrent += sizeof(int);
             }break;
             case MachineDataTypes::STRING:
@@ -213,7 +282,20 @@ static Table* readTable(char* buffer, const unsigned int totalSize, unsigned int
                 {
                     stringLen = table->columnDescriptors[i].maxSize;
                 }
-                memcpy(currentColumn + item * table->columnDescriptors[i].maxSize,  bufferCurrent, stringLen);
+                if( guardedMemoryFetch(currentColumn + item * table->columnDescriptors[i].maxSize,  bufferCurrent, stringLen,  buffer + totalSize ))
+                {
+                    //table is not fully downloaded, we need to try to load it later
+                    for(int i= 0; i < colCount; i++)
+                    {
+                        delete[] table->columnTable[i];
+                    }
+                    printf("\nLOCK STRING\n");
+                     fflush(stdout);
+                    delete[] table->columnTable;
+                    delete table;
+                    readSize = 0;
+                    return nullptr;
+                }
                 bufferCurrent += stringLen;
             } break;
             default:
@@ -223,6 +305,7 @@ static Table* readTable(char* buffer, const unsigned int totalSize, unsigned int
         }
         item++;
     }
+    
     readSize = bufferCurrent - buffer;
     return table;
 }
