@@ -33,9 +33,12 @@ void consumeToken(ParsingState &state, TokenType type)
     }
 }
 
-std::vector<AstNode*> parse(const char *text)
+std::vector<AstNode*> parse(const char *text, char**  parserBuffer)
 {
-    ParsingState state{text, 0 , Tokenizer{text}, false };
+    *parserBuffer = (char*) new ParsingState({text, 0 , Tokenizer{text}, false });
+
+
+    ParsingState &state = *(ParsingState*)*parserBuffer;
     state.errorMessage = new char[ERROR_BUFFER_SIZE];
     vector<AstNode*> statements;
     setjmp(state.buff);
@@ -55,6 +58,18 @@ std::vector<AstNode*> parse(const char *text)
         statements.push_back( parseStatement(state) );
     }
     return statements;
+}
+
+void freeParserBuffer(char *parserBuffer)
+{
+    ParsingState* parserBufferPtr = (ParsingState*)parserBuffer;
+    ParsingState &state = *parserBufferPtr;
+    for(AstNode* node : state.allNodes)
+    {
+        freeNode(node);
+    }
+
+    delete parserBufferPtr;
 }
 
 AstNode* parseStatement(ParsingState& state)
@@ -411,6 +426,7 @@ AstNode *parseOp(ParsingState &state)
 AstNode *allocateNode(ParsingState& state)
 {
     AstNode* node = new AstNode();
+    node->data = nullptr;
     state.allNodes.push_back(node);
     return node;
 }
@@ -419,15 +435,16 @@ void freeNode(AstNode *node)
 {
     switch (node->type)
     {
+    case AstNodeType::STRING:
+    case AstNodeType::CONSTANT:
     case AstNodeType::IDENTIFIER:
         delete ((string*)node->data);
-        delete node;
         break;
     
     default:
         break;
     }
-
+    delete node;
 }
 
 void triggerParserError(ParsingState &state, int value, const char* errorMessage)

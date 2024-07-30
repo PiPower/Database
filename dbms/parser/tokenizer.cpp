@@ -68,6 +68,8 @@ void Tokenizer::putback(Token token)
     putbackQueue.push(move(token));
 }
 
+
+
 void Tokenizer::keywordMapInit()
 {
     m_keywordMap["create"] = TokenType::CREATE;

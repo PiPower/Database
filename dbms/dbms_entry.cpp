@@ -51,11 +51,13 @@ a:
         }
         if( n > 0)
         {
-            //TODO fix parser memory leak of full parse tree
-            vector<AstNode*> queries = parse(buffer);
+            char* parserBuffer;
+            vector<AstNode*> queries = parse(buffer, &parserBuffer);
             InstructionData* byteCode = compile(queries);
+            freeParserBuffer(parserBuffer);
             sendHandshake(client, queries.size());
             executor.execute(byteCode, client);
+            freeInstructionData(byteCode);
         }
     }  
 

@@ -53,7 +53,7 @@ private:
 private:
     unsigned int m_offset;
     const char* m_source;
-    std::unordered_map<std::string, TokenType> m_keywordMap;\
+    std::unordered_map<std::string, TokenType> m_keywordMap;
     std::queue<Token> putbackQueue;
 };
 
