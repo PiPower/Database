@@ -23,6 +23,7 @@ public:
     AvlTree(MachineDataTypes type, unsigned int maxDataSize);
     bool insertValue(char* key);
     bool find(char* key);
+    bool removeValue(char* key);
     int addRefrenceToRow(char* data, char* key);
     void clear();
 private:

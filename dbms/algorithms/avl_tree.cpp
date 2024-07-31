@@ -48,6 +48,121 @@ bool AvlTree::find(char *key)
     return false;
 }
 
+bool AvlTree::removeValue(char *key)
+{
+    Node* currentNode = m_root;
+    while(currentNode)
+    {
+        int comp = currentNode->m_key_int - *(int*)key;
+        if(comp == 0 )
+        {   
+            break;
+        }
+
+        if(comp > 0)
+        {
+            currentNode = currentNode->m_leftChild;
+        }
+        else
+        {
+            currentNode = currentNode->m_rightChild;
+        }
+
+        if(!currentNode)
+        {
+            return false;
+        }
+    }
+    //remove found node
+    Node* parentNode = currentNode->m_parent;
+    //if currentNode is leafNode
+    if(!currentNode->m_leftChild && !currentNode->m_rightChild)
+    {
+        if(parentNode)
+        {
+            if(parentNode->m_rightChild == currentNode){parentNode->m_rightChild = nullptr;}
+            else{parentNode->m_leftChild = nullptr;}
+        }
+        else
+        {
+            m_root = nullptr;
+        }
+    }
+    //if currentNode has only left  or right child 
+    else if( (currentNode->m_leftChild && !currentNode->m_rightChild) || (!currentNode->m_leftChild && currentNode->m_rightChild)) 
+    {
+        Node* replacement = currentNode->m_leftChild != nullptr ? currentNode->m_leftChild : currentNode->m_rightChild;
+        parentNode = currentNode->m_parent;
+        replacement->m_parent = parentNode;
+        if(parentNode)
+        {
+            if(parentNode->m_rightChild == currentNode){parentNode->m_rightChild = replacement;}
+            else{parentNode->m_leftChild = replacement;}
+        }
+        else
+        {
+            m_root = replacement;
+        }
+    }
+    //if currentNode has both children
+    else
+    {
+        Node* y = currentNode->m_rightChild;
+        if(!y->m_leftChild && y->m_rightChild)
+        {
+            //right child replaces current node
+            y->m_parent = currentNode->m_parent;
+            if(parentNode)
+            {
+                if(parentNode->m_rightChild == currentNode){parentNode->m_rightChild = y;}
+                else{parentNode->m_leftChild = y;}
+            }
+            else
+            {
+                m_root = y;
+            }
+
+        }
+
+        while (!y->m_leftChild)
+        {
+            y = y->m_leftChild;
+        }
+        //update y parent node
+        y->m_parent->m_leftChild = y->m_rightChild;
+        if(y->m_rightChild)
+        {
+            y->m_rightChild->m_parent = y->m_parent;
+        }
+        //use y to replace currentNode
+        y->m_parent = currentNode->m_parent;
+        if(currentNode->m_parent)
+        {
+            if(parentNode->m_rightChild == currentNode){parentNode->m_rightChild = y;}
+            else{parentNode->m_leftChild = y;}
+        }
+        else
+        {
+            m_root = y;
+        }
+
+        y->m_leftChild = currentNode->m_leftChild;
+        if(currentNode->m_leftChild)
+        {
+            currentNode->m_leftChild->m_parent =  y;
+        }
+        y->m_rightChild = currentNode->m_rightChild;
+        if(currentNode->m_rightChild)
+        {
+            currentNode->m_rightChild->m_parent =  y;
+        }
+
+
+    }
+
+    return true;
+}
+
 //TODO
 int AvlTree::addRefrenceToRow(char *data, char *key)
 {
@@ -208,9 +323,16 @@ int AvlTree::rightRightBalance(Node* x)
     {
         holder->m_parent = x;
     }
-
-    z->m_balanceFactor = 0;
-    x->m_balanceFactor = 0;
+    if( z->m_balanceFactor == 0)
+    {
+        z->m_balanceFactor = 1;
+        x->m_balanceFactor = -1;
+    }
+    else
+    {
+        z->m_balanceFactor = 0;
+        x->m_balanceFactor = 0;
+    }
   
     return 0;
 }
@@ -242,8 +364,16 @@ int AvlTree::leftLeftBalance(Node *x)
         holder->m_parent = x;
     }
 
-    z->m_balanceFactor = 0;
-    x->m_balanceFactor = 0;
+    if (z->m_balanceFactor == 0)
+    { 
+        z->m_balanceFactor = -1;
+        x->m_balanceFactor = 1;
+    }
+    else
+    {
+        z->m_balanceFactor = 0;
+        x->m_balanceFactor = 0;
+    }
     return 0;
 }
 
@@ -354,7 +484,7 @@ int AvlTree::leftRightBalance(Node *x)
     }
     else
     {
-        z->m_balanceFactor = 1;
+        z->m_balanceFactor = 0;
         x->m_balanceFactor = 1;
     }
     y->m_balanceFactor = 0;
