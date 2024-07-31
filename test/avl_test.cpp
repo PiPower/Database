@@ -20,7 +20,7 @@ struct TestEntry
 
 bool checkIfIsBinaryTree(array<int, ELEMENT_COUNT> &arr, AvlTree *tree);
 void checkIfValuesMatch(array<int, ELEMENT_COUNT> &arr, Node* node, int& index);
-
+int getSubTreeSize(Node* node);
 int main()
 {
 
@@ -117,8 +117,13 @@ bool checkIfIsBinaryTree(array<int, ELEMENT_COUNT> &arr, AvlTree *tree)
             return false;
         }
     }
-
-
+    //check if tree is balance 
+    int l_h = getSubTreeSize(tree->m_root->m_leftChild);
+    int r_h = getSubTreeSize(tree->m_root->m_rightChild);
+    if(abs(l_h - r_h ) >= 2)
+    {
+        return false;
+    }
     return true;
 }
 
@@ -136,4 +141,16 @@ void checkIfValuesMatch(array<int, ELEMENT_COUNT> &arr, Node* node, int& index)
     index++;
 
     return checkIfValuesMatch(arr, node->m_rightChild, index);
+}
+
+int getSubTreeSize(Node *node)
+{
+    if(!node)
+    {
+        return 0;
+    }
+
+    int l_h = getSubTreeSize(node->m_leftChild);
+    int r_h = getSubTreeSize(node->m_rightChild);
+    return max(l_h, r_h) + 1;
 }
