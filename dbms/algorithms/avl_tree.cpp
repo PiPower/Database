@@ -49,7 +49,7 @@ bool AvlTree::find(char *key)
 }
 
 bool AvlTree::removeValue(char *key)
-{
+{             
     Node* currentNode = m_root;
     while(currentNode)
     {
@@ -67,11 +67,11 @@ bool AvlTree::removeValue(char *key)
         {
             currentNode = currentNode->m_rightChild;
         }
+    }
 
-        if(!currentNode)
-        {
-            return false;
-        }
+    if(!currentNode)
+    {
+        return false;
     }
     //remove found node
     Node* parentNode = currentNode->m_parent;
@@ -92,7 +92,6 @@ bool AvlTree::removeValue(char *key)
     else if( (currentNode->m_leftChild && !currentNode->m_rightChild) || (!currentNode->m_leftChild && currentNode->m_rightChild)) 
     {
         Node* replacement = currentNode->m_leftChild != nullptr ? currentNode->m_leftChild : currentNode->m_rightChild;
-        parentNode = currentNode->m_parent;
         replacement->m_parent = parentNode;
         if(parentNode)
         {
@@ -103,16 +102,55 @@ bool AvlTree::removeValue(char *key)
         {
             m_root = replacement;
         }
+
     }
     //if currentNode has both children
     else
     {
+        
         Node* y = currentNode->m_rightChild;
-        if(!y->m_leftChild && y->m_rightChild)
+        if(!y->m_leftChild)
         {
             //right child replaces current node
-            y->m_parent = currentNode->m_parent;
             if(parentNode)
+            {
+                if(parentNode->m_rightChild == currentNode)
+                {parentNode->m_rightChild = y;}
+                else
+                {parentNode->m_leftChild = y;}
+            }
+            else
+            {
+                m_root = y;
+            }
+            y->m_parent = parentNode;
+            y->m_leftChild = currentNode->m_leftChild;
+            if( y->m_leftChild->m_parent)
+            {
+                y->m_leftChild->m_parent = y;
+            }
+        }
+        else
+        {
+            
+            while (true)
+            {
+                if(!y->m_leftChild)
+                {
+                    break;
+                }
+                y = y->m_leftChild;
+
+            }
+            //update y parent node
+            y->m_parent->m_leftChild = y->m_rightChild;
+            if(y->m_rightChild)
+            {
+                y->m_rightChild->m_parent = y->m_parent;
+            }
+            //use y to replace currentNode
+            y->m_parent = currentNode->m_parent;
+            if(currentNode->m_parent)
             {
                 if(parentNode->m_rightChild == currentNode){parentNode->m_rightChild = y;}
                 else{parentNode->m_leftChild = y;}
@@ -122,44 +160,22 @@ bool AvlTree::removeValue(char *key)
                 m_root = y;
             }
 
+            y->m_leftChild = currentNode->m_leftChild;
+            if(currentNode->m_leftChild)
+            {
+                currentNode->m_leftChild->m_parent =  y;
+            }
+            y->m_rightChild = currentNode->m_rightChild;
+            if(currentNode->m_rightChild)
+            {
+                y->m_rightChild->m_parent =  y;
+            }
+            
         }
 
-        while (!y->m_leftChild)
-        {
-            y = y->m_leftChild;
-        }
-        //update y parent node
-        y->m_parent->m_leftChild = y->m_rightChild;
-        if(y->m_rightChild)
-        {
-            y->m_rightChild->m_parent = y->m_parent;
-        }
-        //use y to replace currentNode
-        y->m_parent = currentNode->m_parent;
-        if(currentNode->m_parent)
-        {
-            if(parentNode->m_rightChild == currentNode){parentNode->m_rightChild = y;}
-            else{parentNode->m_leftChild = y;}
-        }
-        else
-        {
-            m_root = y;
-        }
+    } 
 
-        y->m_leftChild = currentNode->m_leftChild;
-        if(currentNode->m_leftChild)
-        {
-            currentNode->m_leftChild->m_parent =  y;
-        }
-        y->m_rightChild = currentNode->m_rightChild;
-        if(currentNode->m_rightChild)
-        {
-            currentNode->m_rightChild->m_parent =  y;
-        }
-
-
-    }
-
+    delete currentNode;
     return true;
 }
 
@@ -186,7 +202,6 @@ void AvlTree::clear()
         {
             nodes.push(current->m_rightChild);
         }
-
         delete current;
     }
     
@@ -293,7 +308,6 @@ int AvlTree::insert(char *key, Node** node)
         child = parent;
         parent = child->m_parent;
     }
-    
     return 1;
 }
 

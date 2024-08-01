@@ -6,9 +6,9 @@
 #include <limits>
 #include <queue>
 #include <stack>
-#define ELEMENT_COUNT 3000
-#define TEST_COUNT 20
-#define NUMBER_BOUNDARY 6000
+#define ELEMENT_COUNT 15
+#define TEST_COUNT 300
+#define NUMBER_BOUNDARY 500
 using namespace std;
 
 struct TestEntry
@@ -18,9 +18,10 @@ struct TestEntry
     int lowerBound;
 };
 
-bool checkIfIsBinaryTree(array<int, ELEMENT_COUNT> &arr, AvlTree *tree);
-void checkIfValuesMatch(array<int, ELEMENT_COUNT> &arr, Node* node, int& index);
+bool checkIfIsBinaryTree(vector<int> &arr, AvlTree *tree);
+void checkIfValuesMatch(vector<int>&arr, Node* node, int& index);
 int getSubTreeSize(Node* node);
+
 int main()
 {
 
@@ -34,46 +35,75 @@ int main()
 
     random_device rd;  // a seed source for the random number engine
     mt19937_64  gen{rd()}; // mersenne_twister_engine seeded with rd()
-    array<int, NUMBER_BOUNDARY* 2> sourceValues;
+    array<int, NUMBER_BOUNDARY* 2> values;
+    uniform_int_distribution<int> dist(ELEMENT_COUNT * 0.6 , ELEMENT_COUNT * 0.8);
 
     for(int i=0; i < NUMBER_BOUNDARY * 2; i++)
     {
-        sourceValues[i] = i - NUMBER_BOUNDARY;
+        values[i] = i - NUMBER_BOUNDARY;
     }
 
-    array<int, ELEMENT_COUNT> arr;
-
-    int passedCount = 0;
+    vector<int> arr;
+    vector<int> buffer;
+    arr.resize(ELEMENT_COUNT);
+    int insertionPassedCount = 0;
+    int deletionPassedCount = 0;
+    vector<int> org;
     for(int i=0; i < TEST_COUNT; i++ )
     {
-        shuffle(sourceValues.begin(), sourceValues.end(), gen);
-        for(int i=0; i < arr.size(); i++)
+        shuffle(values.begin(), values.end(), gen);
+        for(int i=0; i < ELEMENT_COUNT; i++)
         {
-            arr[i] = sourceValues[i];
+            arr[i] = values[i];
         }
 
-        printf("test number %d ", i);
+        printf("Test number %d. ", i);
         for(int i = 0; i < arr.size() ; i++)
         {
             tree.insertValue((char*)&arr[i]);
         }
-        
+        //insertion test
         if(checkIfIsBinaryTree(arr, &tree))
         {
-            printf("is passed\n");
-            passedCount++;
+            printf("Insertion test has been passed. ");
+            insertionPassedCount++;
         }
         else
         {
-            printf("is not passed\n");
+            printf("Insertion test has been not passed. ");
+        }
+
+        // Removal test------------------------------------------
+        int remainingElementCount = dist(gen);
+        shuffle(values.begin(), values.begin() + ELEMENT_COUNT, gen);
+        int j = 0;
+        buffer.resize(remainingElementCount);
+        for(j =0; j < remainingElementCount; j++)
+        {
+            buffer[j] = values[j];
+        }
+
+        for(int p = j;p < ELEMENT_COUNT; p++)
+        {
+            tree.removeValue( (char*)&values[p] );
+        }
+        //deletion test
+        if(checkIfIsBinaryTree(buffer, &tree))
+        {
+            printf("Deletion test has been passed. \n");
+            deletionPassedCount++;
+        }
+        else
+        {
+            printf("Deletion test has been not passed. \n");
         }
         tree.clear();
     }
-    printf("In summary %d out of %d tests were passed\n", passedCount, TEST_COUNT);
+    printf("In summary out of %d tests, %d were passed for insertion and %d for deletion\n", TEST_COUNT, insertionPassedCount, deletionPassedCount);
     int x = 2;
 }
 
-bool checkIfIsBinaryTree(array<int, ELEMENT_COUNT> &arr, AvlTree *tree)
+bool checkIfIsBinaryTree(vector<int>&arr, AvlTree *tree)
 {
     sort( arr.begin(), arr.end() );
     vector<int> elementsFromTree;
@@ -105,11 +135,12 @@ bool checkIfIsBinaryTree(array<int, ELEMENT_COUNT> &arr, AvlTree *tree)
     }
     // check if values are placed correctly
     stack<Node*> nodes;
-    array<int, ELEMENT_COUNT> buffer;
+    vector<int>buffer;
+    buffer.resize(arr.size());
     nodes.push(tree->m_root);
     int i = 0;
     checkIfValuesMatch(buffer, tree->m_root, i);
-    for(int index =0; index < ELEMENT_COUNT; index++)
+    for(int index =0; index < arr.size(); index++)
     {
         if(arr[index]!= buffer[index])
         {   
@@ -127,7 +158,7 @@ bool checkIfIsBinaryTree(array<int, ELEMENT_COUNT> &arr, AvlTree *tree)
     return true;
 }
 
-void checkIfValuesMatch(array<int, ELEMENT_COUNT> &arr, Node* node, int& index)
+void checkIfValuesMatch(vector<int> &arr, Node* node, int& index)
 {
 
     if(!node)
