@@ -76,5 +76,6 @@ Page* choosePage(TableState* table,  uint32_t requiredSpace);
 const ColumnType* findColumn(const TableState* table, const std::string* columnName);
 void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, std::vector< std::string> requestedColumns);
 Page* createPage();
+void markEntryAsDead(TableState* table, Page* page, int index);
 
 #endif

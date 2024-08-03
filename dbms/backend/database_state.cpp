@@ -140,11 +140,8 @@ int filterTable(TableState *table, char *byteCode, bool inverseResult)
             expRes = inverseResult? !expRes : expRes;
             if(expRes)
             {
-                SET_DEAD(currentPage->entries[j] );
+                markEntryAsDead(table, currentPage, j);
                 deleted++;
-                table->itemCount--;
-                swap(currentPage->entries[j], currentPage->entries[currentPage->aliveEntries - 1] );
-                currentPage->aliveEntries--;
                 j--;
             }
             stack.clear();
@@ -580,6 +577,26 @@ Page *createPage()
     page->aliveEntries = 0;
     return page;
 }
+
+void markEntryAsDead(TableState *table, Page *page, int index)
+{
+    for(ColumnType& column : table->columns)
+    {
+        if(column.tree)
+        {
+            char* entry = page->dataBase + GET_OFFSET(page->entries[index]);
+            column.tree->removeValue(entry + column.offset );
+        }
+    }
+
+
+    SET_DEAD(page->entries[index]);
+    table->itemCount--;
+    swap(page->entries[index], page->entries[page->aliveEntries - 1] );
+    page->aliveEntries--;
+}
+
+
 
 // creating buffer for error message
 void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg)

@@ -8,7 +8,8 @@ const char* errTable[]=
     "NONE", "ERROR", "IDENTIFIER", "END_OF_FILE",
     // keywords
     "CREATE", "TABLE", "FROM", "INT", "CHAR", "INSERT",
-    "INTO", "VALUES", "SELECT", "WHERE",
+    "INTO", "VALUES", "SELECT", "WHERE","INNER", "JOIN",
+    "ON", "DELETE", "PRIMARY", "KEY",
     // separators
     "L_BRACKET",  "R_BRACKET", "L_PARENTHESES",  "R_PARENTHESES", 
     "L_BRACE", "R_BRACE",
@@ -37,7 +38,6 @@ std::vector<AstNode*> parse(const char *text, char**  parserBuffer)
 {
     *parserBuffer = (char*) new ParsingState({text, 0 , Tokenizer{text}, false });
 
-
     ParsingState &state = *(ParsingState*)*parserBuffer;
     state.errorMessage = new char[ERROR_BUFFER_SIZE];
     vector<AstNode*> statements;
@@ -48,9 +48,13 @@ std::vector<AstNode*> parse(const char *text, char**  parserBuffer)
         {
             freeNode(node);
         }
+        state.allNodes.clear();
         statements.clear();
-        statements.push_back( new AstNode{AstNodeType::ERROR} );
-        statements[0]->data = new string( state.errorMessage );
+
+        AstNode* node = allocateNode(state);
+        node->type = AstNodeType::ERROR;
+        node->data = new string( state.errorMessage );
+        statements.push_back( node);
         return statements;
     }
     while (state.tokenizer.peekToken().type != TokenType::END_OF_FILE)
@@ -435,6 +439,7 @@ void freeNode(AstNode *node)
 {
     switch (node->type)
     {
+    case AstNodeType::ERROR:
     case AstNodeType::STRING:
     case AstNodeType::CONSTANT:
     case AstNodeType::IDENTIFIER:

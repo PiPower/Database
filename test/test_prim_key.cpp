@@ -29,12 +29,22 @@ int main()
                  "SeLect id, name, age, partner_name, surname from Workers;";
  
     string msg2 = "INSERT Into Workers VALUES"
-                  "(32421, \'Jarek\', \'Nowak\', 43, \'Jarosia\' ), "
+                  //"(32421, \'Jarek\', \'Nowak\', 43, \'Jarosia\' ), "
                   "(1232, \'Janel\', \'Kora\', 26, \'Basia\' );";
     string msg3 = "SeLect id, name, age, partner_name, surname from Workers;";
+
+    string msg4 = "Delete From Workers where id > 1232;";
+
+    string msg5 = "INSERT Into Workers VALUES"
+                  "(32421, \'XXX\', \'TTTYYY\', 43, \'PPPP\' );";
 
     Connection* conn = connectToDbms(100, 500);
     processQuery(msg, conn);
     processQuery(msg2, conn);
+    processQuery(msg3, conn);
+    processQuery(msg4, conn);
+    processQuery(msg3, conn);
+    processQuery(msg2, conn);
+    processQuery(msg5, conn);
     processQuery(msg3, conn);
 }
