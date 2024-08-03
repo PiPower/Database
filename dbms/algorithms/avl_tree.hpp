@@ -28,11 +28,13 @@ public:
     void clear();
 private:
     int insert(char* key, Node** node);
-    int rightRightBalance(Node* x);
-    int leftLeftBalance(Node* x);
-    int rightLeftBalance(Node* x);
-    int leftRightBalance(Node* x);
-
+    Node* rightRightBalance(Node* x);
+    Node* leftLeftBalance(Node* x);
+    Node* rightLeftBalance(Node* x);
+    Node* leftRightBalance(Node* x);
+    void rebalanceNoChildNode(Node* y, bool childIsLeftNode);
+    void rebalanceRecursive(Node* y, Node* oldY);
+    void rebalanceAfterDeletion(Node* y, Node* child);
 #ifdef TEST_AVL_TREE
 public:
 #else

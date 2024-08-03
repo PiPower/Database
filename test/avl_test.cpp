@@ -6,8 +6,8 @@
 #include <limits>
 #include <queue>
 #include <stack>
-#define ELEMENT_COUNT 15
-#define TEST_COUNT 300
+#define ELEMENT_COUNT 500
+#define TEST_COUNT 1000
 #define NUMBER_BOUNDARY 500
 using namespace std;
 
@@ -48,7 +48,6 @@ int main()
     arr.resize(ELEMENT_COUNT);
     int insertionPassedCount = 0;
     int deletionPassedCount = 0;
-    vector<int> org;
     for(int i=0; i < TEST_COUNT; i++ )
     {
         shuffle(values.begin(), values.end(), gen);
@@ -56,7 +55,6 @@ int main()
         {
             arr[i] = values[i];
         }
-
         printf("Test number %d. ", i);
         for(int i = 0; i < arr.size() ; i++)
         {
@@ -70,9 +68,8 @@ int main()
         }
         else
         {
-            printf("Insertion test has been not passed. ");
+            printf("Insertion test has not been passed. ");
         }
-
         // Removal test------------------------------------------
         int remainingElementCount = dist(gen);
         shuffle(values.begin(), values.begin() + ELEMENT_COUNT, gen);
@@ -95,7 +92,7 @@ int main()
         }
         else
         {
-            printf("Deletion test has been not passed. \n");
+            printf("Deletion test has not been passed. \n");
         }
         tree.clear();
     }

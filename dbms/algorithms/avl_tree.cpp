@@ -48,6 +48,7 @@ bool AvlTree::find(char *key)
     return false;
 }
 
+
 bool AvlTree::removeValue(char *key)
 {             
     Node* currentNode = m_root;
@@ -75,13 +76,24 @@ bool AvlTree::removeValue(char *key)
     }
     //remove found node
     Node* parentNode = currentNode->m_parent;
+    Node* retracerStart = nullptr;
+    Node* retracerParent = nullptr;
     //if currentNode is leafNode
     if(!currentNode->m_leftChild && !currentNode->m_rightChild)
     {
         if(parentNode)
         {
-            if(parentNode->m_rightChild == currentNode){parentNode->m_rightChild = nullptr;}
-            else{parentNode->m_leftChild = nullptr;}
+            if(parentNode->m_rightChild == currentNode)
+            {
+                parentNode->m_rightChild = nullptr;
+                rebalanceNoChildNode(parentNode, false);
+            }
+            else
+            {
+                parentNode->m_leftChild = nullptr;
+                rebalanceNoChildNode(parentNode, true);
+            }
+
         }
         else
         {
@@ -89,14 +101,23 @@ bool AvlTree::removeValue(char *key)
         }
     }
     //if currentNode has only left  or right child 
-    else if( (currentNode->m_leftChild && !currentNode->m_rightChild) || (!currentNode->m_leftChild && currentNode->m_rightChild)) 
+    else if( (currentNode->m_leftChild && !currentNode->m_rightChild) ||
+                 (!currentNode->m_leftChild && currentNode->m_rightChild)) 
     {
         Node* replacement = currentNode->m_leftChild != nullptr ? currentNode->m_leftChild : currentNode->m_rightChild;
         replacement->m_parent = parentNode;
         if(parentNode)
         {
-            if(parentNode->m_rightChild == currentNode){parentNode->m_rightChild = replacement;}
-            else{parentNode->m_leftChild = replacement;}
+            if(parentNode->m_rightChild == currentNode)
+            {
+                parentNode->m_rightChild = replacement;
+                rebalanceAfterDeletion(parentNode, parentNode->m_rightChild);
+            }
+            else
+            {
+                parentNode->m_leftChild = replacement;
+                rebalanceAfterDeletion(parentNode, parentNode->m_leftChild);
+            }
         }
         else
         {
@@ -112,6 +133,13 @@ bool AvlTree::removeValue(char *key)
         if(!y->m_leftChild)
         {
             //right child replaces current node
+            y->m_parent = parentNode;
+            y->m_leftChild = currentNode->m_leftChild;
+            if( y->m_leftChild->m_parent)
+            {
+                y->m_leftChild->m_parent = y;
+            }
+
             if(parentNode)
             {
                 if(parentNode->m_rightChild == currentNode)
@@ -123,12 +151,7 @@ bool AvlTree::removeValue(char *key)
             {
                 m_root = y;
             }
-            y->m_parent = parentNode;
-            y->m_leftChild = currentNode->m_leftChild;
-            if( y->m_leftChild->m_parent)
-            {
-                y->m_leftChild->m_parent = y;
-            }
+            rebalanceRecursive(y, currentNode);
         }
         else
         {
@@ -143,10 +166,11 @@ bool AvlTree::removeValue(char *key)
 
             }
             //update y parent node
-            y->m_parent->m_leftChild = y->m_rightChild;
+            Node* R = y->m_parent;
+            R->m_leftChild = y->m_rightChild;
             if(y->m_rightChild)
             {
-                y->m_rightChild->m_parent = y->m_parent;
+                y->m_rightChild->m_parent =  R;
             }
             //use y to replace currentNode
             y->m_parent = currentNode->m_parent;
@@ -171,11 +195,15 @@ bool AvlTree::removeValue(char *key)
                 y->m_rightChild->m_parent =  y;
             }
             
+            y->m_balanceFactor = currentNode->m_balanceFactor;
+            rebalanceAfterDeletion(R, R->m_leftChild);
         }
 
     } 
 
     delete currentNode;
+    currentNode = nullptr;
+
     return true;
 }
 
@@ -255,10 +283,10 @@ int AvlTree::insert(char *key, Node** node)
             // left heavy, needs rebalance
             if(parent->m_balanceFactor == -2)
             {
-                // left left rotation
+                // right right rotation
                 if(child->m_balanceFactor <= 0 )
                 {
-                    leftLeftBalance(parent);
+                    rightRightBalance(parent);
                     break;
                 }
                 // left right rotation
@@ -288,10 +316,10 @@ int AvlTree::insert(char *key, Node** node)
                     rightLeftBalance(parent);
                     break;
                 }
-                // right right rotation
+                // left left rotation
                 else
                 {
-                    rightRightBalance(parent);
+                    leftLeftBalance(parent);
                     break;
                 }
             }
@@ -311,7 +339,7 @@ int AvlTree::insert(char *key, Node** node)
     return 1;
 }
 
-int AvlTree::rightRightBalance(Node* x)
+Node* AvlTree::leftLeftBalance(Node* x)
 {
     Node* z = x->m_rightChild;
     Node* holder =z->m_leftChild;
@@ -339,8 +367,8 @@ int AvlTree::rightRightBalance(Node* x)
     }
     if( z->m_balanceFactor == 0)
     {
-        z->m_balanceFactor = 1;
-        x->m_balanceFactor = -1;
+        z->m_balanceFactor = -1;
+        x->m_balanceFactor = 1;
     }
     else
     {
@@ -348,10 +376,10 @@ int AvlTree::rightRightBalance(Node* x)
         x->m_balanceFactor = 0;
     }
   
-    return 0;
+    return z;
 }
 
-int AvlTree::leftLeftBalance(Node *x)
+Node* AvlTree::rightRightBalance(Node *x)
 {
     Node* z = x->m_leftChild;
     Node* holder = z->m_rightChild;
@@ -380,18 +408,18 @@ int AvlTree::leftLeftBalance(Node *x)
 
     if (z->m_balanceFactor == 0)
     { 
-        z->m_balanceFactor = -1;
-        x->m_balanceFactor = 1;
+        z->m_balanceFactor = 1;
+        x->m_balanceFactor = -1;
     }
     else
     {
         z->m_balanceFactor = 0;
         x->m_balanceFactor = 0;
     }
-    return 0;
+    return z;
 }
 
-int AvlTree::rightLeftBalance(Node *x)
+Node* AvlTree::rightLeftBalance(Node *x)
 {
     Node* z = x->m_rightChild;
     Node* y = z->m_leftChild;
@@ -444,10 +472,10 @@ int AvlTree::rightLeftBalance(Node *x)
         x->m_balanceFactor = 0;
     }
     y->m_balanceFactor = 0;
-    return 0;
+    return y;
 }
 
-int AvlTree::leftRightBalance(Node *x)
+Node* AvlTree::leftRightBalance(Node *x)
 {
     Node* z = x->m_leftChild;
     Node* y = z->m_rightChild;
@@ -502,5 +530,95 @@ int AvlTree::leftRightBalance(Node *x)
         x->m_balanceFactor = 1;
     }
     y->m_balanceFactor = 0;
-    return 0;
+    return y;
+}
+
+void AvlTree::rebalanceNoChildNode(Node *y, bool childIsLeftNode)
+{
+    //if node CANNOT be unbalanced update only balance factor
+    if(y->m_balanceFactor == 0) 
+    {
+        if(childIsLeftNode){y->m_balanceFactor++;}
+        else{y->m_balanceFactor--;}
+
+        return;
+    }
+    Node* child = childIsLeftNode ? y->m_leftChild : y->m_rightChild;
+    //both nodes are null so no need to process y
+    if(!y->m_leftChild && !y->m_rightChild)
+    {
+        rebalanceAfterDeletion(y->m_parent, y);
+    }
+    else
+    {
+        rebalanceAfterDeletion(y, child);
+    }
+}
+
+void AvlTree::rebalanceRecursive(Node *y, Node *oldY)
+{
+
+    if(oldY->m_balanceFactor == 1)
+    {
+        y->m_balanceFactor = 0;
+        rebalanceAfterDeletion(y->m_parent, y);
+    }
+    else if(oldY->m_balanceFactor == -1)
+    {
+        //pass right child to indicate that we lost unit of height in right subtree
+        y->m_balanceFactor = -1;
+        rebalanceAfterDeletion(y, y->m_rightChild);
+    }
+    else
+    {
+        y->m_balanceFactor = -1;
+    }
+}
+
+// child indicates subtree from which we lost 1 unit of height
+void AvlTree::rebalanceAfterDeletion(Node *parent, Node *child)
+{
+    while (parent)
+    {
+        if(parent->m_leftChild == child)
+        {
+            parent->m_balanceFactor++;
+            if(parent->m_balanceFactor == 2)
+            {
+                if(parent->m_rightChild->m_balanceFactor < 0 )
+                {
+                    parent = rightLeftBalance(parent);
+                }
+                else
+                {   
+                    parent = leftLeftBalance(parent);
+                }
+            }
+        }
+        else
+        {
+            parent->m_balanceFactor--;
+            if(parent->m_balanceFactor == -2)
+            {
+                if(parent->m_leftChild->m_balanceFactor  > 0 )
+                {
+                    parent = leftRightBalance(parent);
+                }
+                else
+                {   
+                    parent = rightRightBalance(parent);
+                }
+            }
+        }
+
+        if(parent->m_balanceFactor != 0)
+        {
+            // stop only if parent is non zero
+            // if it is 0 then height of sutree descreased
+            break;
+        }
+
+        child = parent;
+        parent = child->m_parent;
+    }
 }
