@@ -18,8 +18,8 @@ struct TestEntry
     int lowerBound;
 };
 
-bool checkIfIsBinaryTree(vector<int> &arr, AvlTree *tree);
-void checkIfValuesMatch(vector<int>&arr, Node* node, int& index);
+bool checkIfIsBinaryTree(vector<int64_t> &arr, AvlTree *tree);
+void checkIfValuesMatch(vector<int64_t>&arr, Node* node, int& index);
 int getSubTreeSize(Node* node);
 
 int main()
@@ -35,16 +35,16 @@ int main()
 
     random_device rd;
     mt19937_64  gen{rd()};
-    array<int, NUMBER_BOUNDARY* 2> values;
-    uniform_int_distribution<int> dist(ELEMENT_COUNT * 0.6 , ELEMENT_COUNT * 0.8);
+    array<int64_t, NUMBER_BOUNDARY* 2> values;
+    uniform_int_distribution<int64_t> dist(ELEMENT_COUNT * 0.6 , ELEMENT_COUNT * 0.8);
 
     for(int i=0; i < NUMBER_BOUNDARY * 2; i++)
     {
         values[i] = i - NUMBER_BOUNDARY;
     }
 
-    vector<int> arr;
-    vector<int> buffer;
+    vector<int64_t> arr;
+    vector<int64_t> buffer;
     arr.resize(ELEMENT_COUNT);
     int insertionPassedCount = 0;
     int deletionPassedCount = 0;
@@ -100,7 +100,7 @@ int main()
     int x = 2;
 }
 
-bool checkIfIsBinaryTree(vector<int>&arr, AvlTree *tree)
+bool checkIfIsBinaryTree(vector<int64_t>&arr, AvlTree *tree)
 {
     sort( arr.begin(), arr.end() );
     vector<int> elementsFromTree;
@@ -132,7 +132,7 @@ bool checkIfIsBinaryTree(vector<int>&arr, AvlTree *tree)
     }
     // check if values are placed correctly
     stack<Node*> nodes;
-    vector<int>buffer;
+    vector<int64_t>buffer;
     buffer.resize(arr.size());
     nodes.push(tree->m_root);
     int i = 0;
@@ -141,7 +141,7 @@ bool checkIfIsBinaryTree(vector<int>&arr, AvlTree *tree)
     {
         if(arr[index]!= buffer[index])
         {   
-            printf("error values are %d, %d != %d\n", index, arr[index], buffer[index]);
+            printf("error values are %d, %ld != %ld\n", index, arr[index], buffer[index]);
             return false;
         }
     }
@@ -155,7 +155,7 @@ bool checkIfIsBinaryTree(vector<int>&arr, AvlTree *tree)
     return true;
 }
 
-void checkIfValuesMatch(vector<int> &arr, Node* node, int& index)
+void checkIfValuesMatch(vector<int64_t> &arr, Node* node, int& index)
 {
 
     if(!node)

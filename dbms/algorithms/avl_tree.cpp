@@ -29,7 +29,7 @@ bool AvlTree::find(char *key)
     Node* currentNode = m_root;
     while(currentNode)
     {
-        int comp = currentNode->m_key_int - *(int*)key;
+        int64_t comp = currentNode->m_key_int - *(int64_t*)key;
         if(comp == 0 )
         {
             return true;
@@ -54,7 +54,7 @@ bool AvlTree::removeValue(char *key)
     Node* currentNode = m_root;
     while(currentNode)
     {
-        int comp = currentNode->m_key_int - *(int*)key;
+        int64_t comp = currentNode->m_key_int - *(int64_t*)key;
         if(comp == 0 )
         {   
             break;
@@ -247,14 +247,14 @@ int AvlTree::insert(char *key, Node** node)
             *node = new Node();
             (*node)->m_rightChild = nullptr;
             (*node)->m_leftChild = nullptr;
-            (*node)->m_key_int = *(int*)key;
+            (*node)->m_key_int = *(int64_t*)key;
             (*node)->m_rowRefrences = nullptr;
             (*node)->m_parent = parent;
             (*node)->m_balanceFactor = 0;
             break;
         }
 
-        int comp = (*node)->m_key_int - *(int*)key;
+        int64_t comp = (*node)->m_key_int - *(int64_t*)key;
         if(comp == 0 )
         {
             return 0;

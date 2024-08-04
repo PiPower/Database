@@ -80,9 +80,11 @@ const ColumnType* findColumn(const TableState* table, const std::string* columnN
 void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, std::vector< std::string> requestedColumns);
 Page* createPage();
 void markEntryAsDead(TableState* table, Page* page, int index);
+int64_t fetchAs64BitInt(const MachineDataTypes& dataType, char* dataPtr);
 // table locking mechanism
 void lockTable(DatabaseState* database, std::string& tableName);
 void unlockTable(DatabaseState* database, std::string& tableName);
 void lockTables( DatabaseState* database, std::vector<std::string>& tableName);
 void unlockTables(DatabaseState* database, std::vector<std::string>& tableName);
+
 #endif

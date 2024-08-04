@@ -6,7 +6,7 @@
 
 struct Node
 {
-    long long int m_key_int;
+    int64_t m_key_int;
 
     char m_balanceFactor;
 

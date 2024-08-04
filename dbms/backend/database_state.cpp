@@ -88,11 +88,12 @@ IObuffer* insertIntoTable(DatabaseState* database,const std::string& tableName,
         {
             MachineDataTypes currentType = (MachineDataTypes)(*(uint16_t*)currentPtr);
             currentPtr+=2;
+            int64_t data = fetchAs64BitInt(currentType, currentPtr);
             if(currentType != typeTable[j].machineType)
             {
                 typeErrorFlag = true;
             }
-            if(typeTable[j].tree != nullptr && typeTable[j].tree->find(currentPtr) )
+            if(typeTable[j].tree != nullptr && typeTable[j].tree->find((char*)&data) )
             {
                 keyErrorFlag = true;
             }
@@ -449,7 +450,8 @@ uint32_t copyMachineDataType(char *scratchpad, ColumnType& columnDesc, char *sou
             copySize += 1;
         }break;
     default:
-        break;
+        printf("Unsupported data type\n");
+        exit(-1);
     }
     return copySize;
 }
@@ -478,7 +480,8 @@ void insertIntoPage(TableState *table, char *data, uint32_t dataSize, bool inser
 
         if(col->tree != nullptr)
         {
-            col->tree->insertValue( chosenPage->dataBase + GET_OFFSET(entryDesc) + col->offset);
+            int64_t data = fetchAs64BitInt(col->machineType, chosenPage->dataBase + GET_OFFSET(entryDesc) + col->offset );
+            col->tree->insertValue( (char*)&data);
         }
     }
 
@@ -591,8 +594,8 @@ void markEntryAsDead(TableState *table, Page *page, int index)
     {
         if(column.tree)
         {
-            char* entry = page->dataBase + GET_OFFSET(page->entries[index]);
-            column.tree->removeValue(entry + column.offset );
+            int64_t data = fetchAs64BitInt(column.machineType, page->dataBase + GET_OFFSET(page->entries[index]) + column.offset);
+            column.tree->removeValue((char*)&data );
         }
     }
 
@@ -601,6 +604,15 @@ void markEntryAsDead(TableState *table, Page *page, int index)
     table->itemCount--;
     swap(page->entries[index], page->entries[page->aliveEntries - 1] );
     page->aliveEntries--;
+}
+
+int64_t fetchAs64BitInt(const MachineDataTypes& dataType, char *dataPtr)
+{
+    if( dataType == MachineDataTypes::INT32 )
+    {
+        return *(int*)dataPtr;
+    }
+    return 0;
 }
 
 /*
