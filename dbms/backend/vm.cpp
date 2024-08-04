@@ -18,9 +18,12 @@ Operation VirtualMachine::operationTable[(unsigned int)OpCodes::DB_OP_COUNT] =
 
 VirtualMachine::VirtualMachine()
 :
-m_ip(nullptr), m_clientFd(-1), m_privateMemory(new char[LOCAL_BUFFER_SIZE])
+m_ip(nullptr), m_privateMemory(new char[LOCAL_BUFFER_SIZE])
 {
-    databaseState = new DatabaseState();
+    if(!databaseState)
+    {
+        databaseState = new DatabaseState();
+    }
 }
 
 char *VirtualMachine::execute(const InstructionData *byteCode, int clientFd)
@@ -80,6 +83,12 @@ ColumnType VirtualMachine::fetchColumnType()
     return ColumnType{MachineDataTypes::NONE, type, 0};
 }
 
+VirtualMachine::~VirtualMachine()
+{
+    m_ip = nullptr;
+    delete[] m_privateMemory;
+}
+
 void VirtualMachine::executeCreateDatase(void*)
 {
     string tableName = m_ip;
@@ -129,7 +138,9 @@ void VirtualMachine::executeInsertInto(void *)
         argOffset.push_back(fetchUint32());
     }
     unsigned int offset = 0;
+    lockTable(databaseState, tableName);
     IObuffer* buffer = insertIntoTable(databaseState, tableName, colNames, argOffset, m_ip, offset, m_privateMemory, LOCAL_BUFFER_SIZE);
+    unlockTable(databaseState, tableName);
     m_ip += offset;
     sendResponseToClient(buffer);
     freeInstructionData(buffer);
@@ -169,9 +180,11 @@ void VirtualMachine::executeSelect(void *)
     }
 
     TableState* subtable;
+
+    
     if(tableCount == 1)
     {
-        subtable = createSubtable(databaseState, move(tableNames[0]), move(colNames));
+        subtable = createSubtable(databaseState, tableNames[0], colNames);
     }
     else
     {

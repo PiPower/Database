@@ -1,5 +1,5 @@
 #ifndef VIRTUAL_MACHINE
-#define VIRUTAL_MACHINE
+#define VIRTUAL_MACHINE
 #include "database_state.hpp"
 #include "../parser/compiler.hpp"
 
@@ -16,6 +16,7 @@ public:
     uint16_t fetchUint16();
     uint16_t fetchUint32();
     ColumnType fetchColumnType();
+    ~VirtualMachine();
 private:
     // ops
     void executeCreateDatase(void*);
