@@ -118,7 +118,7 @@ void VirtualMachine::executeCreateDatase(void*)
     }
     m_ip += settersCount;
 
-    IObuffer* buffer = createTable(databaseState, move(tableName), move(columnTypes) );
+    IObuffer* buffer = createTable(databaseState,tableName, columnTypes );
     sendResponseToClient(buffer);
     freeInstructionData(buffer);
 }
@@ -184,11 +184,15 @@ void VirtualMachine::executeSelect(void *)
     
     if(tableCount == 1)
     {
+        lockTable(databaseState, tableNames[0] );
         subtable = createSubtable(databaseState, tableNames[0], colNames);
+        unlockTable(databaseState, tableNames[0] );
     }
     else
     {
+        lockTables(databaseState, tableNames);
         subtable = selectAndMerge(databaseState, tableNames,  joinCodes, colNames);
+        unlockTables(databaseState, tableNames);
     }
 
     uint32_t bytecodeSize = *(uint32_t*)m_ip;
@@ -226,8 +230,10 @@ void VirtualMachine::executeFilter(void *)
     char* expression = byteCodeSize > 0 ? m_ip : nullptr;
     m_ip += byteCodeSize;
 
+    lockTable( databaseState, tableName);
     IObuffer* buffer = filterTable(databaseState, tableName, expression, m_privateMemory, LOCAL_BUFFER_SIZE, true);
-    
+    unlockTable( databaseState, tableName);
+
     sendResponseToClient(buffer);
     freeInstructionData(buffer);
 }

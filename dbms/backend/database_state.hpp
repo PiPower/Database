@@ -7,6 +7,7 @@
 #include <vector>
 #include "entry.hpp"
 #include "../algorithms/avl_tree.hpp"
+#include <thread>
 struct Page
 {
     char* dataBase;
@@ -46,16 +47,18 @@ struct TableState
 struct DatabaseState
 {
     std::unordered_map<std::string, TableState*> tables;
+    std::unordered_map<std::string, std::mutex*> locks;
+    std::mutex databaseMutex;
 };
 
 
 //fused ops
-IObuffer* selectFromTable(DatabaseState* database, std::string&& tableName, std::vector<std::string>&& colNames);
+IObuffer* selectFromTable(DatabaseState* database, std::string& tableName, std::vector<std::string>& colNames);
 
 //general ops
-IObuffer* createTable(DatabaseState* database, std::string&& tableName, std::vector<ColumnType>&& columns);
+IObuffer* createTable(DatabaseState* database, std::string& tableName, std::vector<ColumnType>& columns);
 TableState* createTable(std::vector<ColumnType>& columns, const std::string& tableName, bool isSubTable = true);
-TableState* createSubtable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames);
+TableState* createSubtable(DatabaseState *database, std::string& tableName, std::vector<std::string>& colNames);
 void freeTable(TableState* table);
 void freePage(Page* page);
 IObuffer* serialazeTable(TableState* table);
@@ -77,5 +80,9 @@ const ColumnType* findColumn(const TableState* table, const std::string* columnN
 void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, std::vector< std::string> requestedColumns);
 Page* createPage();
 void markEntryAsDead(TableState* table, Page* page, int index);
-
+// table locking mechanism
+void lockTable(DatabaseState* database, std::string& tableName);
+void unlockTable(DatabaseState* database, std::string& tableName);
+void lockTables( DatabaseState* database, std::vector<std::string>& tableName);
+void unlockTables(DatabaseState* database, std::vector<std::string>& tableName);
 #endif

@@ -1,20 +1,20 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "parser/parser.hpp"
 #include <stdio.h>
 #include <iostream>
 #include <string.h>
-#include "backend/vm.hpp"
-#include "parser/compiler.hpp"
-
+#include "connection/connectionHandler.hpp"
+#include <thread>
 using namespace std;
 
+
+
 void errorCheck(int retVal, int fd = 2, const char* additionalMessage = nullptr);
-void sendHandshake(int clientFd, uint8_t tableCount);
+void handleConnection(ConnectionHandler* handler);
+
 int main()
 {
-    VirtualMachine executor;
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     errorCheck(sock);
 
@@ -29,39 +29,17 @@ int main()
     errorCheck(bind( sock, (sockaddr*) &servaddr, sizeof(sockaddr_in )) );
     errorCheck( listen(sock, 10) );
 
-    /*
-    currently serves only one connection dbms-client
-    Communication with the client consists of 2 main parts
-    The first message from the server is the number of response 
-    tables that client can expect. It is followed by the tables
-    where each counts as a one.
-    */
-    sockaddr_in clientAddr;
-    socklen_t len;
-a:
-    int client = accept(sock,  (sockaddr*)&clientAddr, &len);
-    errorCheck(client);
-    char buffer[10000];
     while (true)
     {
-        int n = recv(client, buffer, 10000, 0);
-        if(n == 0)
-        {
-            goto a;
-        }
-        if( n > 0)
-        {
-            char* parserBuffer;
-            vector<AstNode*> queries = parse(buffer, &parserBuffer);
-            InstructionData* byteCode = compile(queries);
-            freeParserBuffer(parserBuffer);
-            sendHandshake(client, queries.size());
-            executor.execute(byteCode, client);
-            freeInstructionData(byteCode);
-        }
+        sockaddr_in clientAddr;
+        socklen_t len;
+        int client = accept(sock,  (sockaddr*)&clientAddr, &len);
+        errorCheck(client);
+
+        ConnectionHandler* handler = new ConnectionHandler(client, clientAddr, len);
+        thread t ( handleConnection, handler );
+        t.detach();
     }  
-
-
 }
 
 void errorCheck(int retVal, int fd, const char* additionalMessage)
@@ -74,7 +52,9 @@ void errorCheck(int retVal, int fd, const char* additionalMessage)
     exit(-1);
 }
 
-void sendHandshake(int clientFd, uint8_t tableCount)
+void handleConnection(ConnectionHandler *handler)
 {
-    send(clientFd, &tableCount, 1, 0);
+    handler->handleClient();
+    delete handler;
 }
+

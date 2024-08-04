@@ -1,6 +1,7 @@
 #include "database_state.hpp"
 #include <cstring>
 #include <algorithm>
+#include <random>
 #include "cursor.hpp"
 #include "expression.hpp"
 using namespace std;
@@ -9,20 +10,26 @@ using namespace std;
 typedef InstructionData IObuffer;
 pair<vector<ColumnType>, vector<string>> fetchColumnsFromCursors(const vector<Cursor>& cursors, const vector<string>& columnNames);
 
-IObuffer* createTable(DatabaseState* database, string&& tableName, vector<ColumnType> &&columns)
+IObuffer* createTable(DatabaseState* database, string& tableName, vector<ColumnType>& columns)
 {
+    database->databaseMutex.lock();
+
     IObuffer* buffer = createInstructionData();
     auto tableIter = database->tables.find( tableName);
     if(tableIter !=  database->tables.end())
     {
         static const char* const errMsg = "Table with specified name already exists";
         updateStringOutputBuffer(buffer, true, errMsg);
+        database->databaseMutex.unlock();
         return buffer;
     }
-    database->tables[move(tableName)] = createTable( columns, tableName, false );
+    database->tables[tableName] = createTable( columns, tableName, false );
+    database->locks[tableName] = new mutex();
 
     static const char* const successMSG = "Table has been created succesfully";
     updateStringOutputBuffer(buffer, false, successMSG);
+
+    database->databaseMutex.unlock();
     return buffer;
 }
 
@@ -250,7 +257,7 @@ TableState* selectAndMerge(DatabaseState *database, const vector<string>& tableN
 // header = item_count(uint32_t)  |col_count(uint16_t) | col_desc_1, ... , col_desc_col_count 
 // col_desc_1 = machine_type(uint16_t) | max_col_size(uint16) | col_name (null terminated string)
 // body is just sequence of bytes described by header in the order following col_desc
-IObuffer* selectFromTable(DatabaseState *database, string &&tableName, vector<string> &&colNames)
+IObuffer* selectFromTable(DatabaseState *database, string& tableName, vector<string>& colNames)
 {
     auto tableIter = database->tables.find( tableName);
     if(tableIter ==  database->tables.end())
@@ -270,7 +277,7 @@ IObuffer* selectFromTable(DatabaseState *database, string &&tableName, vector<st
     return buffer;
 }
 
-TableState *createSubtable(DatabaseState *database, std::string &&tableName, std::vector<std::string> &&colNames)
+TableState *createSubtable(DatabaseState *database, std::string& tableName, std::vector<std::string>& colNames)
 {
     auto tableIter = database->tables.find( tableName);
     if(tableIter ==  database->tables.end())
@@ -596,7 +603,68 @@ void markEntryAsDead(TableState *table, Page *page, int index)
     page->aliveEntries--;
 }
 
+/*
+This function locks single table
+Is used iteratevile over multiple tables
+deadlocks may arise, so for multiple tables
+using  lockTables is adviced
+*/
+void lockTable(DatabaseState *database, std::string &tableName)
+{
+    database->locks[tableName]->lock();
+}
 
+void unlockTable(DatabaseState *database, std::string &tableName)
+{
+    database->locks[tableName]->unlock();
+}
+
+/*
+This function can be used to lock multiple tables
+If one of table locks fails, free all locks and wait 
+random number of miliseconds then try again
+*/
+void lockTables(DatabaseState *database, std::vector<std::string> &tableName)
+{
+    while (true)
+    {
+        int i ;
+        bool isLocked;
+        for(i = 0; i < tableName.size(); i++)
+        {
+            isLocked = database->locks[tableName[i]]->try_lock();
+            if(!isLocked)
+            {
+                break;
+            }
+        }
+
+        if(!isLocked)
+        {
+            for(int j  = 0; j <= i; j++)
+            {
+                database->locks[tableName[j]]->unlock();
+            }
+            random_device rd;
+            mt19937_64  gen{rd()};
+            uniform_int_distribution<int> dist(0, 100);
+            std::chrono::milliseconds duration(dist(gen));
+            this_thread::sleep_for( duration );
+        }
+        else
+        {
+            return;
+        }
+    }
+}
+
+void unlockTables(DatabaseState *database, std::vector<std::string> &tableName)
+{
+    for(int i = 0; i < tableName.size(); i++)
+    {
+        database->locks[tableName[i]]->unlock();
+    }
+}
 
 // creating buffer for error message
 void updateStringOutputBuffer(IObuffer *buffer, bool error, const char *msg)

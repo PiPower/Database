@@ -33,8 +33,8 @@ int main()
 
     AvlTree tree(MachineDataTypes::INT32, 4);
 
-    random_device rd;  // a seed source for the random number engine
-    mt19937_64  gen{rd()}; // mersenne_twister_engine seeded with rd()
+    random_device rd;
+    mt19937_64  gen{rd()};
     array<int, NUMBER_BOUNDARY* 2> values;
     uniform_int_distribution<int> dist(ELEMENT_COUNT * 0.6 , ELEMENT_COUNT * 0.8);
 
