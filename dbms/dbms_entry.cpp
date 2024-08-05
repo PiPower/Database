@@ -40,6 +40,7 @@ int main()
         thread t ( handleConnection, handler );
         t.detach();
     }  
+
 }
 
 void errorCheck(int retVal, int fd, const char* additionalMessage)

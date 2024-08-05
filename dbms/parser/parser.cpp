@@ -72,7 +72,7 @@ void freeParserBuffer(char *parserBuffer)
     {
         freeNode(node);
     }
-
+    delete[] parserBufferPtr->errorMessage;
     delete parserBufferPtr;
 }
 

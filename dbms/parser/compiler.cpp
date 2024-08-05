@@ -228,6 +228,7 @@ void compileCreateTable(CompilationState& state, AstNode *query)
         }
     }
     emitPayload(state.instructionData, primKeySetters, byteCount);
+    delete[] primKeySetters;
 }
 
 void compileInsert(CompilationState &state, AstNode *query)
@@ -270,6 +271,7 @@ void compileInsert(CompilationState &state, AstNode *query)
     }
 
     fillSkippedBytes(state.instructionData, placeholder, header, memorySize);
+    delete[] header;
 }
 
 void compileSelect(CompilationState &state, AstNode *query)

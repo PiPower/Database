@@ -329,6 +329,16 @@ TableState *createSubtable(DatabaseState *database, std::string& tableName, std:
 
 void freeTable(TableState* table)
 {
+    for(ColumnType& col : table->columns)
+    {
+        if(col.tree)
+        {
+            col.tree->clear();
+            delete  col.tree;
+        }
+    }
+
+
     for(Page* page : table->pages)
     {
         freePage(page);
