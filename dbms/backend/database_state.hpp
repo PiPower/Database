@@ -81,10 +81,11 @@ void selectFromPagesFixedEntrySize(IObuffer* buffer, TableState* table, std::vec
 Page* createPage();
 void markEntryAsDead(TableState* table, Page* page, int index);
 int64_t fetchAs64BitInt(const MachineDataTypes& dataType, char* dataPtr);
+IObuffer* checkIfTableExists(DatabaseState* database, std::string& tableName);
 // table locking mechanism
-void lockTable(DatabaseState* database, std::string& tableName);
-void unlockTable(DatabaseState* database, std::string& tableName);
-void lockTables( DatabaseState* database, std::vector<std::string>& tableName);
-void unlockTables(DatabaseState* database, std::vector<std::string>& tableName);
+IObuffer* lockTable(DatabaseState* database, std::string& tableName);
+IObuffer* unlockTable(DatabaseState* database, std::string& tableName);
+IObuffer* lockTables(DatabaseState* database, std::vector<std::string>& tableNames);
+IObuffer* unlockTables(DatabaseState* database, std::vector<std::string>& tableNames);
 
 #endif

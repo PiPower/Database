@@ -18,7 +18,7 @@ Operation VirtualMachine::operationTable[(unsigned int)OpCodes::DB_OP_COUNT] =
 
 VirtualMachine::VirtualMachine()
 :
-m_ip(nullptr), m_privateMemory(new char[LOCAL_BUFFER_SIZE])
+m_ip(nullptr), m_privateMemory(new char[LOCAL_BUFFER_SIZE]), vm_exit(false)
 {
     if(!databaseState)
     {
@@ -33,8 +33,9 @@ char *VirtualMachine::execute(const InstructionData *byteCode, int clientFd)
     while (true)
     {
         OpCodes op = fetchInstruction();
-        if(op == OpCodes::EXIT)
+        if(op == OpCodes::EXIT || vm_exit)
         {
+            vm_exit = false;
             return nullptr;
         }
         
@@ -138,8 +139,16 @@ void VirtualMachine::executeInsertInto(void *)
         argOffset.push_back(fetchUint32());
     }
     unsigned int offset = 0;
-    lockTable(databaseState, tableName);
-    IObuffer* buffer = insertIntoTable(databaseState, tableName, colNames, argOffset, m_ip, offset, m_privateMemory, LOCAL_BUFFER_SIZE);
+    IObuffer* buffer = lockTable(databaseState, tableName);
+    if(buffer)
+    {
+        sendResponseToClient(buffer);
+        freeInstructionData(buffer);
+        vm_exit = true;
+        return;
+    }
+    
+    buffer = insertIntoTable(databaseState, tableName, colNames, argOffset, m_ip, offset, m_privateMemory, LOCAL_BUFFER_SIZE);
     unlockTable(databaseState, tableName);
     m_ip += offset;
     sendResponseToClient(buffer);
@@ -180,17 +189,31 @@ void VirtualMachine::executeSelect(void *)
     }
 
     TableState* subtable;
-
-    
+    IObuffer* buffer;
     if(tableCount == 1)
     {
-        lockTable(databaseState, tableNames[0] );
+
+        buffer = lockTable(databaseState, tableNames[0] );
+        if(buffer)
+        {
+            sendResponseToClient(buffer);
+            freeInstructionData(buffer);
+            vm_exit = true;
+            return;
+        }
         subtable = createSubtable(databaseState, tableNames[0], colNames);
         unlockTable(databaseState, tableNames[0] );
     }
     else
     {
-        lockTables(databaseState, tableNames);
+        buffer = lockTables(databaseState, tableNames);
+        if(buffer)
+        {
+            sendResponseToClient(buffer);
+            freeInstructionData(buffer);
+            vm_exit = true;
+            return;
+        }
         subtable = selectAndMerge(databaseState, tableNames,  joinCodes, colNames);
         unlockTables(databaseState, tableNames);
     }
@@ -201,7 +224,7 @@ void VirtualMachine::executeSelect(void *)
     {
         filterTable(subtable, m_ip);
     }
-    IObuffer* buffer = serialazeTable(subtable);
+    buffer = serialazeTable(subtable);
     freeTable(subtable);
     sendResponseToClient(buffer);
     freeInstructionData(buffer);
@@ -230,8 +253,15 @@ void VirtualMachine::executeFilter(void *)
     char* expression = byteCodeSize > 0 ? m_ip : nullptr;
     m_ip += byteCodeSize;
 
-    lockTable( databaseState, tableName);
-    IObuffer* buffer = filterTable(databaseState, tableName, expression, m_privateMemory, LOCAL_BUFFER_SIZE, true);
+    IObuffer* buffer = lockTable( databaseState, tableName);
+    if(buffer)
+    {
+        sendResponseToClient(buffer);
+        freeInstructionData(buffer);
+        vm_exit = true;
+        return;
+    }
+    buffer = filterTable(databaseState, tableName, expression, m_privateMemory, LOCAL_BUFFER_SIZE, true);
     unlockTable( databaseState, tableName);
 
     sendResponseToClient(buffer);

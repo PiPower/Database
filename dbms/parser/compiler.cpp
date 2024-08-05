@@ -219,8 +219,12 @@ void compileCreateTable(CompilationState& state, AstNode *query)
     {   
         AstNode* type = query->child[i];
         serializeDataType(type, state.instructionData);
-        
-        if(type->child.size() > 1 && (type->child[1]->type == AstNodeType::PRIMARY_KEY) )
+
+        if(type->child.size() > 1 && 
+        find_if(type->child.begin(), type->child.end(), [](AstNode* node)
+        {
+            return node->type == AstNodeType::PRIMARY_KEY;
+        } ) != type->child.end()   ) 
         {
             unsigned int byteIndex = (i-1)/BYTE_SIZE;
             uint8_t bit_shift = (i-1)% BYTE_SIZE;

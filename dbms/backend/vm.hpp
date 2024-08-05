@@ -32,6 +32,7 @@ private:
     int m_clientFd;
     static Operation operationTable[(unsigned int)OpCodes::DB_OP_COUNT];
     char* m_privateMemory;
+    bool vm_exit;
 };
 
 

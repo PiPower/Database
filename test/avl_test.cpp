@@ -24,7 +24,6 @@ int getSubTreeSize(Node* node);
 
 int main()
 {
-
     if(NUMBER_BOUNDARY * 2 <  ELEMENT_COUNT)
     {
         printf("Incorrect array sizes for the test\n");

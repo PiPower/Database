@@ -1,8 +1,10 @@
 #ifndef AVL_TREE
 #define AVL_TREE
 #include <setjmp.h>
+#include <vector>
 #include "../backend/types.hpp"
 #include <inttypes.h>
+#include <string>
 
 struct Node
 {
@@ -10,7 +12,7 @@ struct Node
 
     char m_balanceFactor;
 
-    char** m_rowRefrences;
+    std::vector<std::string> refrences;
     Node* m_leftChild;
     Node* m_rightChild;
     Node* m_parent;
@@ -24,7 +26,6 @@ public:
     bool insertValue(char* key);
     bool find(char* key);
     bool removeValue(char* key);
-    int addRefrenceToRow(char* data, char* key);
     void clear();
 private:
     int insert(char* key, Node** node);

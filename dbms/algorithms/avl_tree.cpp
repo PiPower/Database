@@ -1,6 +1,7 @@
 #include "avl_tree.hpp"
 #include <math.h>
 #include <utility>
+#include <algorithm>
 #include <queue>
 using namespace std;
 
@@ -27,11 +28,35 @@ bool AvlTree::insertValue(char *key)
 bool AvlTree::find(char *key)
 {
     Node* currentNode = m_root;
+    string s_key;
+    int64_t i_key = *(int64_t*)key;
+    if(m_dataType == MachineDataTypes::STRING)
+    {
+        int i =0;
+        //if it is string we store pointer to pointer to string
+        char** string_key = (char**) key;
+        while (i < m_maxDataSize && (*string_key)[i] != '\0')
+        {
+            s_key += (*string_key)[i];
+            i++;
+        }
+        i_key = (int64_t) hash<string>{}(s_key);
+    }
     while(currentNode)
     {
-        int64_t comp = currentNode->m_key_int - *(int64_t*)key;
-        if(comp == 0 )
+        int64_t comp = currentNode->m_key_int - i_key;
+        if(comp == 0)
         {
+            if(m_dataType == MachineDataTypes::STRING &&
+                std::find(currentNode->refrences.begin(), currentNode->refrences.end(), s_key ) != currentNode->refrences.end())
+            {
+                return true;
+            }
+            else if(m_dataType == MachineDataTypes::STRING)
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -52,9 +77,23 @@ bool AvlTree::find(char *key)
 bool AvlTree::removeValue(char *key)
 {             
     Node* currentNode = m_root;
+    string s_key;
+    int64_t i_key = *(int64_t*)key;
+    if(m_dataType == MachineDataTypes::STRING)
+    {
+        int i = 0;
+        char** string_key = (char**) key;
+        while (i < m_maxDataSize && (*string_key)[i] != '\0')
+        {
+            s_key += (*string_key)[i];
+            i++;
+        }
+        i_key = (int64_t) hash<string>{}(s_key);
+    }
+
     while(currentNode)
     {
-        int64_t comp = currentNode->m_key_int - *(int64_t*)key;
+        int64_t comp = currentNode->m_key_int - i_key;
         if(comp == 0 )
         {   
             break;
@@ -73,6 +112,16 @@ bool AvlTree::removeValue(char *key)
     if(!currentNode)
     {
         return false;
+    }
+
+    if(m_dataType == MachineDataTypes::STRING && currentNode->refrences.size() > 0)
+    {
+        erase(currentNode->refrences, s_key);
+    }
+
+    if(currentNode->refrences.size() > 0)
+    {
+        return true;
     }
     //remove found node
     Node* parentNode = currentNode->m_parent;
@@ -207,12 +256,6 @@ bool AvlTree::removeValue(char *key)
     return true;
 }
 
-//TODO
-int AvlTree::addRefrenceToRow(char *data, char *key)
-{
-    return 0;
-}
-
 void AvlTree::clear()
 {
     queue<Node*> nodes;
@@ -240,23 +283,31 @@ void AvlTree::clear()
 int AvlTree::insert(char *key, Node** node)
 {
     Node* parent = nullptr;
-    while(true)
+    string s_key;
+    int64_t i_key = *(int64_t*)key;
+    if(m_dataType == MachineDataTypes::STRING)
     {
-        if(!(*node))
+        int i = 0;
+        char** string_key = (char**) key;
+        while (i < m_maxDataSize && (*string_key)[i] != '\0')
         {
-            *node = new Node();
-            (*node)->m_rightChild = nullptr;
-            (*node)->m_leftChild = nullptr;
-            (*node)->m_key_int = *(int64_t*)key;
-            (*node)->m_rowRefrences = nullptr;
-            (*node)->m_parent = parent;
-            (*node)->m_balanceFactor = 0;
-            break;
+            s_key += (*string_key)[i];
+            i++;
         }
+        i_key = (int64_t) hash<string>{}(s_key);
+    }
 
+    while(*node)
+    {
         int64_t comp = (*node)->m_key_int - *(int64_t*)key;
         if(comp == 0 )
         {
+            if(m_dataType == MachineDataTypes::STRING &&
+              std::find((*node)->refrences.begin(), (*node)->refrences.end(), s_key) == (*node)->refrences.end())
+            {
+                break;
+            }
+      
             return 0;
         }
 
@@ -270,7 +321,24 @@ int AvlTree::insert(char *key, Node** node)
             node = &(*node)->m_rightChild;
         }
     }
+    // create node
+    if(*node && m_dataType == MachineDataTypes::STRING)
+    {
+        (*node)->refrences.push_back(move(s_key));
+        return 1;
+    }
 
+    *node = new Node();
+    (*node)->m_rightChild = nullptr;
+    (*node)->m_leftChild = nullptr;
+    (*node)->m_key_int = i_key;
+    (*node)->m_parent = parent;
+    (*node)->m_balanceFactor = 0;
+
+    if(m_dataType == MachineDataTypes::STRING)
+    {
+        (*node)->refrences.push_back(move(s_key));
+    }
     // rebalancing 
     Node* child = *node;
     while (parent != nullptr)

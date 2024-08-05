@@ -622,6 +622,10 @@ int64_t fetchAs64BitInt(const MachineDataTypes& dataType, char *dataPtr)
     {
         return *(int*)dataPtr;
     }
+    else  if( dataType == MachineDataTypes::STRING )
+    {
+        return (int64_t)dataPtr;
+    }
     return 0;
 }
 
@@ -630,31 +634,75 @@ This function locks single table
 Is used iteratevile over multiple tables
 deadlocks may arise, so for multiple tables
 using  lockTables is adviced
+if buffer is NULL request is valid
+otherwise request is invalid
 */
-void lockTable(DatabaseState *database, std::string &tableName)
+IObuffer* lockTable(DatabaseState *database, std::string &tableName)
 {
+    IObuffer* buffer = checkIfTableExists(database, tableName);
+    if(buffer)
+    {
+        return buffer;
+    }
     database->locks[tableName]->lock();
+
+    return nullptr;
 }
 
-void unlockTable(DatabaseState *database, std::string &tableName)
+IObuffer *checkIfTableExists(DatabaseState *database, std::string &tableName)
 {
+    auto tableIter = database->tables.find( tableName);
+    if(tableIter ==  database->tables.end())
+    {
+        IObuffer* buffer = createInstructionData();
+        static const char* const errMsg = "Table with specified name does not exists";
+        updateStringOutputBuffer(buffer, true, errMsg);
+        return buffer;
+    }
+    return nullptr;
+}
+
+/*
+unlocks tables locked using lockTable
+if buffer is NULL request is valid
+otherwise request is invalid
+*/
+IObuffer* unlockTable(DatabaseState *database, std::string &tableName)
+{
+    IObuffer* buffer = checkIfTableExists(database, tableName);
+    if(buffer)
+    {
+        return buffer;
+    }
     database->locks[tableName]->unlock();
+    return nullptr;
 }
 
 /*
 This function can be used to lock multiple tables
 If one of table locks fails, free all locks and wait 
 random number of miliseconds then try again
+if buffer is NULL request is valid
+otherwise request is invalid
 */
-void lockTables(DatabaseState *database, std::vector<std::string> &tableName)
+IObuffer* lockTables(DatabaseState *database, std::vector<std::string> &tableNames)
 {
+    for(int i=0; i < tableNames.size(); i++)
+    {
+        IObuffer* buffer = checkIfTableExists(database, tableNames[i]);
+        if(buffer)
+        {
+            return buffer;
+        }
+    }
+
     while (true)
     {
         int i ;
         bool isLocked;
-        for(i = 0; i < tableName.size(); i++)
+        for(i = 0; i < tableNames[i].size(); i++)
         {
-            isLocked = database->locks[tableName[i]]->try_lock();
+            isLocked = database->locks[tableNames[i]]->try_lock();
             if(!isLocked)
             {
                 break;
@@ -665,7 +713,7 @@ void lockTables(DatabaseState *database, std::vector<std::string> &tableName)
         {
             for(int j  = 0; j <= i; j++)
             {
-                database->locks[tableName[j]]->unlock();
+                database->locks[tableNames[j]]->unlock();
             }
             random_device rd;
             mt19937_64  gen{rd()};
@@ -675,17 +723,35 @@ void lockTables(DatabaseState *database, std::vector<std::string> &tableName)
         }
         else
         {
-            return;
+            return nullptr;
         }
     }
+
+    return nullptr;
 }
 
-void unlockTables(DatabaseState *database, std::vector<std::string> &tableName)
+/*
+unlocks tables locked using lockTables
+if buffer is NULL request is valid
+otherwise request is invalid
+*/
+IObuffer* unlockTables(DatabaseState *database, std::vector<std::string> &tableNames)
 {
-    for(int i = 0; i < tableName.size(); i++)
+    for(int i=0; i < tableNames.size(); i++)
     {
-        database->locks[tableName[i]]->unlock();
+        IObuffer* buffer = checkIfTableExists(database, tableNames[i]);
+        if(buffer)
+        {
+            return buffer;
+        }
     }
+
+    for(int i = 0; i < tableNames.size(); i++)
+    {
+        database->locks[tableNames[i]]->unlock();
+    }
+
+    return nullptr;
 }
 
 // creating buffer for error message
