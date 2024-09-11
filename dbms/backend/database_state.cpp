@@ -700,7 +700,7 @@ IObuffer* lockTables(DatabaseState *database, std::vector<std::string> &tableNam
     {
         int i ;
         bool isLocked;
-        for(i = 0; i < tableNames[i].size(); i++)
+        for(i = 0; i < tableNames.size(); i++)
         {
             isLocked = database->locks[tableNames[i]]->try_lock();
             if(!isLocked)
